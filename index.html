@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-    <div id="root">Iniciando Matriz...</div>
+    <div id="root">Iniciando Matriz Simbiótica...</div>
 
     <script type="text/babel">
         const firebaseConfig = { databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/" };
@@ -28,12 +28,12 @@
         const { useState, useEffect, useRef } = React;
 
         function Dashboard() {
-            // COLOQUE A NOVA CHAVE AQUI
+            // 1. COLOQUE SUA CHAVE GSK AQUI DENTRO DAS ASPAS
             const CHAVE_IA = "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"; 
 
             const [input, setInput] = useState("");
             const [stats, setStats] = useState({ rigor: 10, imaginacao: 10, simbiose: 10 });
-            const [mensagens, setMensagens] = useState([{ autor: 'Tutor', texto: 'Nova chave detectada. O que vamos pesquisar hoje?' }]);
+            const [mensagens, setMensagens] = useState([{ autor: 'Tutor', texto: 'Motor atualizado para Llama 3.1. Pronto para o diálogo epistêmico. O que deseja explorar?' }]);
             const [carregando, setCarregando] = useState(false);
             const chatRef = useRef(null);
 
@@ -59,32 +59,33 @@
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
-                            model: "llama3-8b-8192",
+                            // MODELO ATUALIZADO AQUI:
+                            model: "llama-3.1-8b-instant", 
                             messages: [
-                                { role: "system", content: "Você é o Tutor Simbiótico. Responda de forma profunda sobre história e tecnologia." },
+                                { role: "system", content: "Você é o Tutor Simbiótico da Faculdade HyperWeb3. Use a Ordem Epistemológica de Simbiose Digital (OESD). Ajude o aluno a unir Rigor científico com Imaginação estética." },
                                 { role: "user", content: input }
-                            ]
+                            ],
+                            temperature: 0.7
                         })
                     });
 
                     if (!response.ok) {
                         const erroData = await response.json();
-                        throw new Error(erroData.error?.message || "Erro desconhecido");
+                        throw new Error(erroData.error?.message || "Falha na Matriz");
                     }
 
                     const data = await response.json();
                     setMensagens(prev => [...prev, { autor: 'Tutor', texto: data.choices[0].message.content }]);
 
-                    // Evolução de Stats
-                    db.ref('aluno_teste/stats').set({
+                    // Evolução de Stats no Firebase
+                    db.ref('aluno_teste/stats').update({
                         rigor: Math.min(stats.rigor + 5, 100),
                         imaginacao: Math.min(stats.imaginacao + 5, 100),
                         simbiose: Math.min(stats.simbiose + 5, 100)
                     });
 
                 } catch (error) {
-                    console.error(error);
-                    setMensagens(prev => [...prev, { autor: 'Sistema', texto: `ERRO REAL: ${error.message}. Verifique se sua chave foi revogada no painel da Groq.` }]);
+                    setMensagens(prev => [...prev, { autor: 'Sistema', texto: `AVISO: ${error.message}` }]);
                 } finally {
                     setCarregando(false);
                 }
@@ -93,37 +94,46 @@
             return (
                 <div className="min-h-screen p-8 flex flex-col items-center">
                     <header className="w-full max-w-5xl flex justify-between border-b border-emerald-900 pb-4 mb-8">
-                        <h1 className="text-2xl font-bold">HYPERWEB3 // OESD</h1>
-                        <div className="text-violet-400 font-bold">SIMBIOSE: {stats.simbiose}%</div>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tighter">HYPERWEB3 // OESD</h1>
+                            <p className="text-[10px] text-emerald-500 uppercase">Ambiente de Co-criação</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-[10px] opacity-50 block uppercase">Simbiose Atual</span>
+                            <span className="text-2xl font-bold text-violet-400">{stats.simbiose}%</span>
+                        </div>
                     </header>
 
                     <main className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="md:col-span-1 border-oesd p-4 rounded h-fit">
-                            <p className="text-xs mb-2">RIGOR: {stats.rigor}%</p>
-                            <div className="w-full bg-gray-900 h-1 mb-4"><div className="bg-emerald-500 h-1" style={{width: `${stats.rigor}%`}}></div></div>
-                            <p className="text-xs mb-2">IMAGINAÇÃO: {stats.imaginacao}%</p>
-                            <div className="w-full bg-gray-900 h-1"><div className="bg-violet-500 h-1" style={{width: `${stats.imaginacao}%`}}></div></div>
+                            <h3 className="text-[10px] font-bold mb-4 opacity-70">STATUS COGNITIVO</h3>
+                            <div className="space-y-4">
+                                <div><p className="text-[9px] mb-1 opacity-50">RIGOR</p><div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1" style={{width: `${stats.rigor}%`}}></div></div></div>
+                                <div><p className="text-[9px] mb-1 opacity-50">IMAGINAÇÃO</p><div className="w-full bg-slate-900 h-1"><div className="bg-violet-500 h-1" style={{width: `${stats.imaginacao}%`}}></div></div></div>
+                            </div>
                         </div>
 
-                        <div className="md:col-span-3 border-oesd rounded flex flex-col h-[500px] bg-black/50">
+                        <div className="md:col-span-3 border-oesd rounded flex flex-col h-[550px] bg-slate-950/50">
                             <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
                                 {mensagens.map((m, i) => (
                                     <div key={i} className={`flex ${m.autor === 'Você' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`p-3 rounded-lg max-w-[80%] text-sm ${m.autor === 'Você' ? 'bg-emerald-900/30' : 'bg-slate-800'}`}>
-                                            <p className="text-[9px] opacity-40 mb-1">{m.autor}</p>
-                                            {m.texto}
+                                        <div className={`p-3 rounded-lg max-w-[85%] text-sm ${m.autor === 'Você' ? 'bg-emerald-900/40 border border-emerald-500/20' : 'bg-slate-800/80 border border-violet-500/20'}`}>
+                                            <p className="text-[8px] font-bold opacity-30 mb-1 uppercase tracking-widest">{m.autor}</p>
+                                            <div className="leading-relaxed">{m.texto}</div>
                                         </div>
                                     </div>
                                 ))}
+                                {carregando && <div className="text-[10px] animate-pulse text-emerald-500">IA Gerando Conhecimento...</div>}
                             </div>
-                            <div className="p-4 border-t border-emerald-900 flex gap-2">
+                            <div className="p-4 border-t border-emerald-900 bg-black/30 flex gap-2">
                                 <input 
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    className="flex-1 bg-transparent border border-emerald-800 p-2 outline-none"
-                                    placeholder="Pergunte ao Tutor..."
+                                    onKeyPress={(e) => e.key === 'Enter' && enviarMensagem()}
+                                    className="flex-1 bg-transparent border border-emerald-800 p-2 outline-none focus:border-emerald-500 text-emerald-400 text-sm"
+                                    placeholder="Questione o passado, projete o futuro..."
                                 />
-                                <button onClick={enviarMensagem} className="bg-emerald-600 text-black px-4 py-2 font-bold uppercase text-xs">Enviar</button>
+                                <button onClick={enviarMensagem} disabled={carregando} className="bg-emerald-600 text-black px-5 py-2 font-bold text-xs uppercase hover:bg-emerald-400 disabled:opacity-20 transition-all">Enviar</button>
                             </div>
                         </div>
                     </main>
