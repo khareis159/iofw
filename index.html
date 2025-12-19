@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperWeb3 | Faculdade Simbiótica</title>
+    <title>OESD | Faculdade Simbiótica HyperWeb3</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -11,14 +11,19 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background-color: #020617; color: #10b981; font-family: monospace; }
-        .border-oesd { border: 1px solid #064e3b; background: rgba(6, 78, 59, 0.1); }
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #064e3b; }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        body { background-color: #010409; color: #c9d1d9; font-family: 'Space Grotesk', sans-serif; margin: 0; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .border-oesd { border: 1px solid #30363d; background: #0d1117; transition: all 0.3s ease; }
+        .border-oesd:hover { border-color: #238636; box-shadow: 0 0 15px rgba(35, 134, 54, 0.2); }
+        .chat-scroll::-webkit-scrollbar { width: 3px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #238636; }
+        .stats-bar { height: 4px; border-radius: 2px; background: #21262d; overflow: hidden; }
+        .stats-fill { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
 <body>
-    <div id="root">Iniciando Matriz Simbiótica...</div>
+    <div id="root"></div>
 
     <script type="text/babel">
         const firebaseConfig = { databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/" };
@@ -27,113 +32,147 @@
 
         const { useState, useEffect, useRef } = React;
 
-        function Dashboard() {
-            // 1. COLOQUE SUA CHAVE GSK AQUI DENTRO DAS ASPAS
+        function App() {
+            // --- CONFIGURAÇÃO ---
             const CHAVE_IA = "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"; 
-
-            const [input, setInput] = useState("");
+            const [alunoID, setAlunoID] = useState(localStorage.getItem('alunoID') || "");
+            const [nomeInput, setNomeInput] = useState("");
+            
             const [stats, setStats] = useState({ rigor: 10, imaginacao: 10, simbiose: 10 });
-            const [mensagens, setMensagens] = useState([{ autor: 'Tutor', texto: 'Motor atualizado para Llama 3.1. Pronto para o diálogo epistêmico. O que deseja explorar?' }]);
+            const [mensagens, setMensagens] = useState([]);
+            const [input, setInput] = useState("");
             const [carregando, setCarregando] = useState(false);
             const chatRef = useRef(null);
 
+            // Carregar dados ao iniciar
             useEffect(() => {
-                db.ref('aluno_teste/stats').on('value', (snap) => snap.val() && setStats(snap.val()));
-            }, []);
+                if (alunoID) {
+                    db.ref(`pioneiros/${alunoID}/stats`).on('value', (s) => s.val() && setStats(s.val()));
+                    db.ref(`pioneiros/${alunoID}/historico`).on('value', (s) => {
+                        const data = s.val();
+                        if (data) setMensagens(Object.values(data));
+                        else setMensagens([{ autor: 'Tutor', texto: `Bem-vindo à Simbiose, ${alunoID}. Sua trilha epistêmica está limpa. O que vamos forjar?` }]);
+                    });
+                }
+            }, [alunoID]);
 
             useEffect(() => { chatRef.current?.scrollTo(0, chatRef.current.scrollHeight); }, [mensagens]);
 
-            const enviarMensagem = async () => {
-                if (!input || carregando) return;
-                
-                const msgUsuario = { autor: 'Você', texto: input };
-                setMensagens(prev => [...prev, msgUsuario]);
-                setInput("");
-                setCarregando(true);
-
-                try {
-                    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${CHAVE_IA.trim()}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            // MODELO ATUALIZADO AQUI:
-                            model: "llama-3.1-8b-instant", 
-                            messages: [
-                                { role: "system", content: "Você é o Tutor Simbiótico da Faculdade HyperWeb3. Use a Ordem Epistemológica de Simbiose Digital (OESD). Ajude o aluno a unir Rigor científico com Imaginação estética." },
-                                { role: "user", content: input }
-                            ],
-                            temperature: 0.7
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const erroData = await response.json();
-                        throw new Error(erroData.error?.message || "Falha na Matriz");
-                    }
-
-                    const data = await response.json();
-                    setMensagens(prev => [...prev, { autor: 'Tutor', texto: data.choices[0].message.content }]);
-
-                    // Evolução de Stats no Firebase
-                    db.ref('aluno_teste/stats').update({
-                        rigor: Math.min(stats.rigor + 5, 100),
-                        imaginacao: Math.min(stats.imaginacao + 5, 100),
-                        simbiose: Math.min(stats.simbiose + 5, 100)
-                    });
-
-                } catch (error) {
-                    setMensagens(prev => [...prev, { autor: 'Sistema', texto: `AVISO: ${error.message}` }]);
-                } finally {
-                    setCarregando(false);
+            const fazerLogin = () => {
+                if (nomeInput.trim()) {
+                    localStorage.setItem('alunoID', nomeInput.trim());
+                    setAlunoID(nomeInput.trim());
                 }
             };
 
+            const enviar = async () => {
+                if (!input || carregando) return;
+                const textoUser = input;
+                setInput("");
+                setCarregando(true);
+
+                // 1. Salvar localmente
+                const novaMsg = { autor: alunoID, texto: textoUser, timestamp: Date.now() };
+                db.ref(`pioneiros/${alunoID}/historico`).push(novaMsg);
+
+                try {
+                    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${CHAVE_IA}`, "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            model: "llama-3.1-8b-instant",
+                            messages: [
+                                { role: "system", content: "Você é o Tutor Simbiótico. Analise com RIGOR CIENTÍFICO e IMAGINAÇÃO ESTÉTICA. Responda de forma curta, mas densa." },
+                                { role: "user", content: textoUser }
+                            ]
+                        })
+                    });
+                    const data = await res.json();
+                    const resposta = data.choices[0].message.content;
+
+                    // 2. Salvar Resposta da IA no Firebase
+                    db.ref(`pioneiros/${alunoID}/historico`).push({ autor: 'Tutor', texto: resposta, timestamp: Date.now() });
+
+                    // 3. Evoluir Stats
+                    const novosStats = {
+                        rigor: Math.min(stats.rigor + 3, 100),
+                        imaginacao: Math.min(stats.imaginacao + 5, 100),
+                        simbiose: Math.min(Math.round((stats.rigor + stats.imaginacao + 5) / 2), 100)
+                    };
+                    db.ref(`pioneiros/${alunoID}/stats`).set(novosStats);
+
+                } catch (e) {
+                    console.error(e);
+                } finally { setCarregando(false); }
+            };
+
+            if (!alunoID) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-[#010409] p-6">
+                        <div className="border-oesd p-8 rounded-xl max-w-md w-full text-center">
+                            <h1 className="text-2xl font-bold mb-2 text-[#238636] glow-text">OESD // PIONEIRO</h1>
+                            <p className="text-xs opacity-50 mb-6 uppercase tracking-widest">Identifique-se para entrar na rede</p>
+                            <input 
+                                value={nomeInput} onChange={e => setNomeInput(e.target.value)}
+                                className="w-full bg-black border border-[#30363d] p-3 rounded mb-4 outline-none focus:border-[#238636] text-center"
+                                placeholder="Nome ou Pseudônimo"
+                            />
+                            <button onClick={fazerLogin} className="w-full bg-[#238636] text-white py-3 rounded font-bold hover:bg-[#2ea043] transition-all">INICIAR SIMBIOSE</button>
+                        </div>
+                    </div>
+                );
+            }
+
             return (
-                <div className="min-h-screen p-8 flex flex-col items-center">
-                    <header className="w-full max-w-5xl flex justify-between border-b border-emerald-900 pb-4 mb-8">
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tighter">HYPERWEB3 // OESD</h1>
-                            <p className="text-[10px] text-emerald-500 uppercase">Ambiente de Co-criação</p>
+                <div className="min-h-screen flex flex-col md:flex-row">
+                    {/* Lateral - Stats */}
+                    <aside className="w-full md:w-80 bg-[#0d1117] border-r border-[#30363d] p-6 flex flex-col">
+                        <div className="mb-10">
+                            <h1 className="text-xl font-bold text-[#238636] mono">HYPERWEB3</h1>
+                            <p className="text-[10px] opacity-40 uppercase tracking-tighter">Brasil // Comunidade Pioneira</p>
                         </div>
-                        <div className="text-right">
-                            <span className="text-[10px] opacity-50 block uppercase">Simbiose Atual</span>
-                            <span className="text-2xl font-bold text-violet-400">{stats.simbiose}%</span>
-                        </div>
-                    </header>
 
-                    <main className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div className="md:col-span-1 border-oesd p-4 rounded h-fit">
-                            <h3 className="text-[10px] font-bold mb-4 opacity-70">STATUS COGNITIVO</h3>
-                            <div className="space-y-4">
-                                <div><p className="text-[9px] mb-1 opacity-50">RIGOR</p><div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1" style={{width: `${stats.rigor}%`}}></div></div></div>
-                                <div><p className="text-[9px] mb-1 opacity-50">IMAGINAÇÃO</p><div className="w-full bg-slate-900 h-1"><div className="bg-violet-500 h-1" style={{width: `${stats.imaginacao}%`}}></div></div></div>
+                        <div className="flex-1 space-y-8">
+                            <div>
+                                <div className="flex justify-between text-[10px] mb-2 font-bold opacity-60"><span>RIGOR CIENTÍFICO</span><span>{stats.rigor}%</span></div>
+                                <div className="stats-bar"><div className="stats-fill bg-[#238636]" style={{width: `${stats.rigor}%`}}></div></div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-[10px] mb-2 font-bold opacity-60"><span>IMAGINAÇÃO ESTÉTICA</span><span>{stats.imaginacao}%</span></div>
+                                <div className="stats-bar"><div className="stats-fill bg-[#8957e5]" style={{width: `${stats.imaginacao}%`}}></div></div>
+                            </div>
+                            <div className="pt-6 border-t border-[#30363d] text-center">
+                                <span className="text-[10px] opacity-40 block mb-1 uppercase font-bold">Índice de Simbiose</span>
+                                <span className="text-4xl font-bold text-white mono">{stats.simbiose}%</span>
                             </div>
                         </div>
 
-                        <div className="md:col-span-3 border-oesd rounded flex flex-col h-[550px] bg-slate-950/50">
-                            <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
-                                {mensagens.map((m, i) => (
-                                    <div key={i} className={`flex ${m.autor === 'Você' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`p-3 rounded-lg max-w-[85%] text-sm ${m.autor === 'Você' ? 'bg-emerald-900/40 border border-emerald-500/20' : 'bg-slate-800/80 border border-violet-500/20'}`}>
-                                            <p className="text-[8px] font-bold opacity-30 mb-1 uppercase tracking-widest">{m.autor}</p>
-                                            <div className="leading-relaxed">{m.texto}</div>
-                                        </div>
+                        <button onClick={() => { localStorage.clear(); location.reload(); }} className="text-[10px] opacity-30 hover:opacity-100 uppercase mt-auto">Desconectar: {alunoID}</button>
+                    </aside>
+
+                    {/* Chat de Co-criação */}
+                    <main className="flex-1 flex flex-col bg-[#010409]">
+                        <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-6 chat-scroll">
+                            {mensagens.map((m, i) => (
+                                <div key={i} className={`flex ${m.autor === 'Tutor' ? 'justify-start' : 'justify-end'}`}>
+                                    <div className={`max-w-[80%] p-4 rounded-xl text-sm leading-relaxed border ${m.autor === 'Tutor' ? 'bg-[#0d1117] border-[#30363d] text-[#c9d1d9]' : 'bg-[#23863615] border-[#23863640] text-white'}`}>
+                                        <span className="text-[8px] font-bold block mb-2 opacity-30 uppercase mono">{m.autor}</span>
+                                        {m.texto}
                                     </div>
-                                ))}
-                                {carregando && <div className="text-[10px] animate-pulse text-emerald-500">IA Gerando Conhecimento...</div>}
-                            </div>
-                            <div className="p-4 border-t border-emerald-900 bg-black/30 flex gap-2">
+                                </div>
+                            ))}
+                            {carregando && <div className="text-[10px] animate-pulse text-[#238636] mono">Tutor processando matriz de conhecimento...</div>}
+                        </div>
+
+                        <div className="p-6 bg-[#0d1117] border-t border-[#30363d]">
+                            <div className="max-w-4xl mx-auto flex gap-4">
                                 <input 
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && enviarMensagem()}
-                                    className="flex-1 bg-transparent border border-emerald-800 p-2 outline-none focus:border-emerald-500 text-emerald-400 text-sm"
-                                    placeholder="Questione o passado, projete o futuro..."
+                                    value={input} onChange={e => setInput(e.target.value)}
+                                    onKeyPress={e => e.key === 'Enter' && enviar()}
+                                    className="flex-1 bg-black border border-[#30363d] p-4 rounded-lg outline-none focus:border-[#238636] text-sm"
+                                    placeholder="Proponha um raciocínio simbiótico..."
                                 />
-                                <button onClick={enviarMensagem} disabled={carregando} className="bg-emerald-600 text-black px-5 py-2 font-bold text-xs uppercase hover:bg-emerald-400 disabled:opacity-20 transition-all">Enviar</button>
+                                <button onClick={enviar} disabled={carregando} className="bg-[#238636] text-white px-8 rounded-lg font-bold hover:bg-[#2ea043] transition-all uppercase text-xs">Forjar</button>
                             </div>
                         </div>
                     </main>
@@ -142,7 +181,7 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<Dashboard />);
+        root.render(<App />);
     </script>
 </body>
 </html>
