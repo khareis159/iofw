@@ -1,1 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperWeb3 | Faculdade Simbiótica</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        body { background: #050a0f; color: #00ff88; font-family: 'Courier New', monospace; }
+        .glow { text-shadow: 0 0 10px #00ff88; }
+        .glass { background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.2); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
+    <script>
+        // CONFIGURAÇÃO FIREBASE
+        const firebaseConfig = {
+            databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [input, setInput] = useState("");
+            const [chat, setChat] = useState([{ role: 'system', content: 'Inicie sua jornada simbiótica.' }]);
+            const [stats, setStats] = useState({ rigor: 0, imaginacao: 0, simbiose: 0 });
+            const [wallet, setWallet] = useState(null);
+
+            // Conectar Wallet (Simulação Web3)
+            const connectWallet = async () => {
+                if (window.ethereum) {
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    setWallet(await signer.getAddress());
+                } else {
+                    alert("Instale a Metamask!");
+                }
+            };
+
+            // Lógica do Tutor IA (Prompt OESD)
+            const handleSimbiose = async () => {
+                const novaMensagem = { role: 'user', content: input };
+                const novoChat = [...chat, novaMensagem];
+                setChat(novoChat);
+                setInput("");
+
+                // Simulação de resposta da IA (Integrar API Groq/OpenAI aqui)
+                setTimeout(() => {
+                    const respostaIA = { 
+                        role: 'assistant', 
+                        content: `Análise Heurística: Seu projeto sobre "${input}" demonstra potencial. Para elevar o RIGOR, defina métricas. Para IMAGINAÇÃO, busque a estética funcional. Deseja registrar este progresso na blockchain?` 
+                    };
+                    setChat([...novoChat, respostaIA]);
+                    
+                    // Atualiza Firebase em Tempo Real
+                    const newStats = { rigor: stats.rigor + 5, imaginacao: stats.imaginacao + 10, simbiose: (stats.rigor + stats.imaginacao) / 2 };
+                    setStats(newStats);
+                    db.ref('users/test-user/stats').set(newStats);
+                }, 1000);
+            };
+
+            return (
+                <div className="p-4 max-w-5xl mx-auto">
+                    <header className="flex justify-between items-center border-b border-emerald-900 py-6 mb-8">
+                        <div>
+                            <h1 className="text-3xl font-bold glow">HYPERWEB3 <span className="text-white font-light">// OESD</span></h1>
+                            <p className="text-xs opacity-50">FACULDADE SIMBIÓTICA AUTÔNOMA</p>
+                        </div>
+                        <button onClick={connectWallet} className="glass px-4 py-2 text-xs hover:bg-emerald-900 transition">
+                            {wallet ? `LOGADO: ${wallet.substring(0,6)}...` : "CONECTAR WALLET"}
+                        </button>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Status Panel */}
+                        <div className="glass p-4 rounded">
+                            <h2 className="text-xs mb-4 underline">NÍVEL DE SIMBIOSE</h2>
+                            <div className="space-y-4">
+                                <div><p className="text-[10px]">RIGOR</p><div className="w-full bg-emerald-900 h-1"><div className="bg-emerald-400 h-1" style={{width: `${stats.rigor}%`}}></div></div></div>
+                                <div><p className="text-[10px]">IMAGINAÇÃO</p><div className="w-full bg-emerald-900 h-1"><div className="bg-emerald-400 h-1" style={{width: `${stats.imaginacao}%`}}></div></div></div>
+                                <div className="text-center pt-4">
+                                    <span className="text-4xl font-bold tracking-widest">{Math.round(stats.simbiose)}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Chat / Tutor IA */}
+                        <div className="md:col-span-2 glass p-4 rounded flex flex-col h-[500px]">
+                            <div className="flex-1 overflow-y-auto space-y-4 mb-4 text-sm">
+                                {chat.map((m, i) => (
+                                    <div key={i} className={`${m.role === 'user' ? 'text-right' : 'text-left'}`}>
+                                        <span className={`inline-block p-2 ${m.role === 'user' ? 'bg-emerald-900 text-white' : 'bg-slate-900 border border-emerald-800'}`}>
+                                            {m.content}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 border-t border-emerald-900 pt-4">
+                                <input 
+                                    value={input} 
+                                    onChange={(e) => setInput(e.target.value)}
+                                    className="flex-1 bg-transparent border border-emerald-800 p-2 outline-none focus:border-emerald-400"
+                                    placeholder="Descreva seu projeto ou dúvida..."
+                                />
+                                <button onClick={handleSimbiose} className="bg-emerald-500 text-black px-6 font-bold hover:bg-white">ENVIAR</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 opacity-50 text-[10px] text-center uppercase tracking-widest">
+                        <div className="p-2 border border-emerald-900">Simbiose Cognitiva</div>
+                        <div className="p-2 border border-emerald-900">Aplicação Heurística</div>
+                        <div className="p-2 border border-emerald-900">Rigor com Imaginação</div>
+                        <div className="p-2 border border-emerald-900">História Viva</div>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
