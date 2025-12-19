@@ -2,143 +2,146 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HyperWeb3 | Faculdade Simbiótica</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 1. Importações Estáveis -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        body { background: #020617; color: #10b981; font-family: monospace; }
-        .oesd-card { border: 1px solid #064e3b; background: rgba(6, 78, 59, 0.1); }
-        .scanline { border-bottom: 2px solid rgba(16, 185, 129, 0.1); }
+        body { background-color: #020617; color: #10b981; font-family: monospace; margin: 0; }
+        .glow-text { text-shadow: 0 0 10px #10b981; }
+        .border-oesd { border: 1px solid #064e3b; background: rgba(6, 78, 59, 0.1); }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <!-- Mensagem de segurança caso o JS falhe -->
+        <div style="color: white; text-align: center; padding: 50px;">Carregando Matriz Simbiótica...</div>
+    </div>
 
     <script>
-        // 1. CONEXÃO COM SEU FIREBASE
-        const firebaseConfig = { databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(firebaseConfig);
+        // 2. CONFIGURAÇÃO FIREBASE (Seu projeto iofw-79391)
+        const firebaseConfig = {
+            databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/"
+        };
+        
+        // Inicialização Segura
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
 
+        // 3. COMPONENTE PRINCIPAL
         const { useState, useEffect } = React;
 
-        function App() {
+        function Dashboard() {
             const [input, setInput] = useState("");
             const [stats, setStats] = useState({ rigor: 10, imaginacao: 10, simbiose: 10 });
-            const [chat, setChat] = useState([{ role: 'assistant', content: 'Saudações, acadêmico. Eu sou o Tutor Simbiótico. Qual problema do mundo real iremos transmutar hoje usando a OESD?' }]);
-            const [loading, setLoading] = useState(false);
+            const [mensagens, setMensagens] = useState([
+                { autor: 'Tutor', texto: 'Sistema OESD Online. Pronto para co-criação.' }
+            ]);
 
-            // SUA CHAVE DA IA (Cole aqui a chave do Passo 2)
-            const GROQ_KEY = "COLE_AQUI_SUA_CHAVE_GSK"; 
-
-            // Sincronizar stats com o Firebase em tempo real
+            // ESCUTAR FIREBASE (Lê os dados em tempo real)
             useEffect(() => {
-                db.ref('aluno_teste/stats').on('value', (snapshot) => {
-                    if (snapshot.val()) setStats(snapshot.val());
+                const statsRef = db.ref('aluno_teste/stats');
+                statsRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) setStats(data);
                 });
             }, []);
 
-            const processarOESD = async () => {
-                if(!input || !GROQ_KEY.includes("gsk")) {
-                    alert("Por favor, insira sua chave da Groq no código!");
-                    return;
-                }
-                setLoading(true);
-                const novasMensagens = [...chat, { role: 'user', content: input }];
-                setChat(novasMensagens);
-                setInput("");
+            // FUNÇÃO DE INTERAÇÃO
+            const enviarMensagem = () => {
+                if (!input) return;
 
-                try {
-                    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                        method: "POST",
-                        headers: { "Authorization": `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            model: "llama3-8b-8192",
-                            messages: [
-                                { role: "system", content: "Você é o Tutor da Faculdade Simbiótica. Use a Ordem Epistemológica de Simbiose Digital (OESD). Analise o projeto do aluno sob 4 pilares: Simbiose, Heurística, Rigor e Imaginação. Seja breve e encorajador." },
-                                ...novasMensagens
-                            ]
-                        })
-                    });
-                    const data = await response.json();
-                    const respostaIA = data.choices[0].message.content;
-                    
-                    setChat([...novasMensagens, { role: 'assistant', content: respostaIA }]);
+                const novaMsg = { autor: 'Você', texto: input };
+                setMensagens([...mensagens, novaMsg]);
 
-                    // Evoluir Stats no Firebase
+                // Simulação de lógica OESD e salvamento no Firebase
+                setTimeout(() => {
+                    const respostaTutor = { 
+                        autor: 'Tutor', 
+                        texto: `Analisando "${input}"... Rigor e Imaginação processados. Dados salvos no seu legado.` 
+                    };
+                    setMensagens(prev => [...prev, respostaTutor]);
+
+                    // Atualiza o Firebase
                     const novosStats = {
                         rigor: Math.min(stats.rigor + 5, 100),
-                        imaginacao: Math.min(stats.imaginacao + 8, 100),
+                        imaginacao: Math.min(stats.imaginacao + 7, 100),
                         simbiose: Math.min(stats.simbiose + 6, 100)
                     };
                     db.ref('aluno_teste/stats').set(novosStats);
-                } catch (e) {
-                    console.error("Erro na IA:", e);
-                } finally {
-                    setLoading(false);
-                }
+                }, 800);
+
+                setInput("");
             };
 
             return (
-                <div className="max-w-4xl mx-auto p-6">
-                    <header className="border-b border-emerald-800 mb-8 pb-4 flex justify-between items-end">
+                <div className="min-h-screen p-4 md:p-8">
+                    <header className="max-w-5xl mx-auto flex justify-between items-center mb-8 border-b border-emerald-900 pb-4">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-widest text-emerald-400">HYPERWEB3 // OESD</h1>
-                            <p className="text-[10px] text-emerald-700">INSTITUIÇÃO EDUCACIONAL DESCENTRALIZADA</p>
+                            <h1 className="text-2xl font-bold glow-text">HYPERWEB3 // OESD</h1>
+                            <p className="text-[10px] opacity-50 uppercase tracking-widest">Faculdade Simbiótica HyperWeb3</p>
                         </div>
-                        <div className="text-right text-xs space-y-1">
-                            <div>RIGOR: {stats.rigor}%</div>
-                            <div>IMAGINAÇÃO: {stats.imaginacao}%</div>
-                            <div className="text-violet-400 font-bold">SIMBIOSE: {stats.simbiose}%</div>
+                        <div className="text-right">
+                            <span className="text-xs block">STATUS DE SIMBIOSE</span>
+                            <span className="text-xl font-bold text-violet-400">{stats.simbiose}%</span>
                         </div>
                     </header>
 
-                    <main className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2 flex flex-col h-[600px] oesd-card rounded-lg p-4">
-                            <div className="flex-1 overflow-y-auto space-y-4 mb-4 text-sm p-2">
-                                {chat.map((m, i) => (
-                                    <div key={i} className={`p-3 rounded ${m.role === 'user' ? 'bg-emerald-900/30 ml-8 border-r-2 border-emerald-500' : 'bg-slate-900/50 mr-8 border-l-2 border-violet-500'}`}>
-                                        <p className="text-[10px] opacity-50 mb-1">{m.role.toUpperCase()}</p>
-                                        {m.content}
+                    <main className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Painel Lateral -->
+                        <div className="space-y-4">
+                            <div className="border-oesd p-4 rounded shadow-lg">
+                                <h3 className="text-xs font-bold mb-3 border-b border-emerald-900 pb-1 uppercase">Atributos</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <div className="flex justify-between text-[10px] mb-1"><span>RIGOR</span><span>{stats.rigor}%</span></div>
+                                        <div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1" style={{width: `${stats.rigor}%`}}></div></div>
                                     </div>
-                                ))}
-                                {loading && <div className="animate-pulse">IA Processando Simbiose...</div>}
+                                    <div>
+                                        <div className="flex justify-between text-[10px] mb-1"><span>IMAGINAÇÃO</span><span>{stats.imaginacao}%</span></div>
+                                        <div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1" style={{width: `${stats.imaginacao}%`}}></div></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex gap-2 border-t border-emerald-900 pt-4">
-                                <input 
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    className="flex-1 bg-black border border-emerald-900 p-3 outline-none focus:border-emerald-400 text-emerald-400"
-                                    placeholder="Descreva sua ideia de projeto..."
-                                />
-                                <button onClick={processarOESD} className="bg-emerald-600 text-black px-6 font-bold hover:bg-emerald-400 transition">INICIAR</button>
+                            <div className="border-oesd p-4 rounded text-[10px] opacity-70">
+                                <p>PILARES OESD:</p>
+                                <ul className="mt-2 space-y-1">
+                                    <li>• Simbiose Cognitiva</li>
+                                    <li>• Aplicação Heurística</li>
+                                    <li>• Rigor com Imaginação</li>
+                                    <li>• História Viva</li>
+                                </ul>
                             </div>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="oesd-card p-4 rounded-lg">
-                                <h3 className="text-xs font-bold mb-4 border-b border-emerald-900 pb-2">LEGADO (NFT)</h3>
-                                {stats.simbiose > 50 ? (
-                                    <div className="text-center p-4 border-2 border-dashed border-violet-500 animate-bounce">
-                                        <p className="text-[10px]">NFT DISPONÍVEL</p>
-                                        <button className="bg-violet-600 text-white text-[10px] p-2 mt-2">FORJAR CERTIFICADO</button>
+                        <!-- Chat Central -->
+                        <div className="md:col-span-2 border-oesd rounded flex flex-col h-[500px]">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {mensagens.map((m, i) => (
+                                    <div key={i} className={`text-sm ${m.autor === 'Você' ? 'text-right' : 'text-left'}`}>
+                                        <div className={`inline-block p-2 rounded ${m.autor === 'Você' ? 'bg-emerald-900/40 border-r-2 border-emerald-400' : 'bg-slate-800/50 border-l-2 border-violet-500'}`}>
+                                            <p className="text-[9px] opacity-50 mb-1">{m.autor.toUpperCase()}</p>
+                                            <p>{m.texto}</p>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <p className="text-[10px] opacity-30 italic text-center">Atinja 50% de Simbiose para gerar seu Legado Vivo.</p>
-                                )}
+                                ))}
                             </div>
-                            
-                            <div className="oesd-card p-4 rounded-lg">
-                                <h3 className="text-xs font-bold mb-4 border-b border-emerald-900 pb-2">PILARES OESD</h3>
-                                <ul className="text-[10px] space-y-2">
-                                    <li>🌱 SIMBIOSE COGNITIVA</li>
-                                    <li>🛠️ APLICAÇÃO HEURÍSTICA</li>
-                                    <li>🔬 RIGOR COM IMAGINAÇÃO</li>
-                                    <li>📜 HISTÓRIA VIVA</li>
-                                </ul>
+                            <div className="p-4 border-t border-emerald-900 flex gap-2">
+                                <input 
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && enviarMensagem()}
+                                    className="flex-1 bg-black border border-emerald-800 p-2 outline-none focus:border-emerald-400 text-emerald-400"
+                                    placeholder="Proponha um projeto ou ação..."
+                                />
+                                <button onClick={enviarMensagem} className="bg-emerald-600 text-black px-4 py-2 font-bold text-xs hover:bg-emerald-400 transition">ENVIAR</button>
                             </div>
                         </div>
                     </main>
@@ -146,8 +149,9 @@
             );
         }
 
+        // 4. RENDERIZAÇÃO (Formato React 18)
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(React.createElement(Dashboard));
     </script>
 </body>
 </html>
