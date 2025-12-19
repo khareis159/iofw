@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HyperWeb3 | Faculdade Simbiótica</title>
-    <!-- 1. Importações Estáveis -->
+    
+    <!-- 1. Bibliotecas Necessárias -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- O "TRADUTOR" BABEL (Resolve o erro do seu print) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -15,27 +20,25 @@
         body { background-color: #020617; color: #10b981; font-family: monospace; margin: 0; }
         .glow-text { text-shadow: 0 0 10px #10b981; }
         .border-oesd { border: 1px solid #064e3b; background: rgba(6, 78, 59, 0.1); }
+        /* Esconde o carregando assim que o React inicia */
+        #root:empty { color: white; text-align: center; padding: 50px; }
     </style>
 </head>
 <body>
-    <div id="root">
-        <!-- Mensagem de segurança caso o JS falhe -->
-        <div style="color: white; text-align: center; padding: 50px;">Carregando Matriz Simbiótica...</div>
-    </div>
+    <div id="root">Carregando Matriz Simbiótica...</div>
 
-    <script>
-        // 2. CONFIGURAÇÃO FIREBASE (Seu projeto iofw-79391)
+    <!-- 2. O Script agora é do tipo "text/babel" -->
+    <script type="text/babel">
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
             databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/"
         };
         
-        // Inicialização Segura
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
 
-        // 3. COMPONENTE PRINCIPAL
         const { useState, useEffect } = React;
 
         function Dashboard() {
@@ -45,7 +48,6 @@
                 { autor: 'Tutor', texto: 'Sistema OESD Online. Pronto para co-criação.' }
             ]);
 
-            // ESCUTAR FIREBASE (Lê os dados em tempo real)
             useEffect(() => {
                 const statsRef = db.ref('aluno_teste/stats');
                 statsRef.on('value', (snapshot) => {
@@ -54,26 +56,24 @@
                 });
             }, []);
 
-            // FUNÇÃO DE INTERAÇÃO
             const enviarMensagem = () => {
                 if (!input) return;
 
                 const novaMsg = { autor: 'Você', texto: input };
-                setMensagens([...mensagens, novaMsg]);
+                const listaAtualizada = [...mensagens, novaMsg];
+                setMensagens(listaAtualizada);
 
-                // Simulação de lógica OESD e salvamento no Firebase
                 setTimeout(() => {
                     const respostaTutor = { 
                         autor: 'Tutor', 
-                        texto: `Analisando "${input}"... Rigor e Imaginação processados. Dados salvos no seu legado.` 
+                        texto: `Analisando "${input}"... Rigor e Imaginação processados conforme a OESD. Evoluindo stats.` 
                     };
                     setMensagens(prev => [...prev, respostaTutor]);
 
-                    // Atualiza o Firebase
                     const novosStats = {
                         rigor: Math.min(stats.rigor + 5, 100),
                         imaginacao: Math.min(stats.imaginacao + 7, 100),
-                        simbiose: Math.min(stats.simbiose + 6, 100)
+                        simbiose: Math.min(Math.round((stats.rigor + stats.imaginacao) / 2), 100)
                     };
                     db.ref('aluno_teste/stats').set(novosStats);
                 }, 800);
@@ -86,33 +86,32 @@
                     <header className="max-w-5xl mx-auto flex justify-between items-center mb-8 border-b border-emerald-900 pb-4">
                         <div>
                             <h1 className="text-2xl font-bold glow-text">HYPERWEB3 // OESD</h1>
-                            <p className="text-[10px] opacity-50 uppercase tracking-widest">Faculdade Simbiótica HyperWeb3</p>
+                            <p className="text-[10px] opacity-50 uppercase tracking-widest font-bold text-emerald-600">Faculdade Simbiótica HyperWeb3</p>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs block">STATUS DE SIMBIOSE</span>
-                            <span className="text-xl font-bold text-violet-400">{stats.simbiose}%</span>
+                            <span className="text-[10px] block opacity-70">STATUS DE SIMBIOSE</span>
+                            <span className="text-2xl font-bold text-violet-400">{stats.simbiose}%</span>
                         </div>
                     </header>
 
                     <main className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Painel Lateral -->
                         <div className="space-y-4">
                             <div className="border-oesd p-4 rounded shadow-lg">
-                                <h3 className="text-xs font-bold mb-3 border-b border-emerald-900 pb-1 uppercase">Atributos</h3>
-                                <div className="space-y-3">
+                                <h3 className="text-xs font-bold mb-4 border-b border-emerald-900 pb-1 text-emerald-400 uppercase">Atributos Cognitivos</h3>
+                                <div className="space-y-4">
                                     <div>
                                         <div className="flex justify-between text-[10px] mb-1"><span>RIGOR</span><span>{stats.rigor}%</span></div>
-                                        <div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1" style={{width: `${stats.rigor}%`}}></div></div>
+                                        <div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1 transition-all duration-500" style={{width: `${stats.rigor}%`}}></div></div>
                                     </div>
                                     <div>
                                         <div className="flex justify-between text-[10px] mb-1"><span>IMAGINAÇÃO</span><span>{stats.imaginacao}%</span></div>
-                                        <div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1" style={{width: `${stats.imaginacao}%`}}></div></div>
+                                        <div className="w-full bg-slate-900 h-1"><div className="bg-emerald-500 h-1 transition-all duration-500" style={{width: `${stats.imaginacao}%`}}></div></div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="border-oesd p-4 rounded text-[10px] opacity-70">
-                                <p>PILARES OESD:</p>
-                                <ul className="mt-2 space-y-1">
+                            <div className="border-oesd p-4 rounded text-[10px] opacity-70 bg-black/40">
+                                <p className="font-bold text-emerald-500 mb-2">PILARES OESD:</p>
+                                <ul className="space-y-2">
                                     <li>• Simbiose Cognitiva</li>
                                     <li>• Aplicação Heurística</li>
                                     <li>• Rigor com Imaginação</li>
@@ -121,27 +120,26 @@
                             </div>
                         </div>
 
-                        <!-- Chat Central -->
-                        <div className="md:col-span-2 border-oesd rounded flex flex-col h-[500px]">
+                        <div className="md:col-span-2 border-oesd rounded flex flex-col h-[550px] bg-slate-950/50">
                             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                 {mensagens.map((m, i) => (
                                     <div key={i} className={`text-sm ${m.autor === 'Você' ? 'text-right' : 'text-left'}`}>
-                                        <div className={`inline-block p-2 rounded ${m.autor === 'Você' ? 'bg-emerald-900/40 border-r-2 border-emerald-400' : 'bg-slate-800/50 border-l-2 border-violet-500'}`}>
-                                            <p className="text-[9px] opacity-50 mb-1">{m.autor.toUpperCase()}</p>
-                                            <p>{m.texto}</p>
+                                        <div className={`inline-block p-3 rounded-lg max-w-[80%] ${m.autor === 'Você' ? 'bg-emerald-900/40 border border-emerald-500/30' : 'bg-slate-800/60 border border-violet-500/30'}`}>
+                                            <p className="text-[9px] font-bold opacity-50 mb-1 tracking-tighter">{m.autor.toUpperCase()}</p>
+                                            <p className="leading-relaxed">{m.texto}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="p-4 border-t border-emerald-900 flex gap-2">
+                            <div className="p-4 border-t border-emerald-900 flex gap-2 bg-black/20">
                                 <input 
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && enviarMensagem()}
-                                    className="flex-1 bg-black border border-emerald-800 p-2 outline-none focus:border-emerald-400 text-emerald-400"
-                                    placeholder="Proponha um projeto ou ação..."
+                                    className="flex-1 bg-transparent border border-emerald-800 p-3 outline-none focus:border-emerald-400 text-emerald-400 placeholder-emerald-900"
+                                    placeholder="Proponha um desafio à IA..."
                                 />
-                                <button onClick={enviarMensagem} className="bg-emerald-600 text-black px-4 py-2 font-bold text-xs hover:bg-emerald-400 transition">ENVIAR</button>
+                                <button onClick={enviarMensagem} className="bg-emerald-600 text-black px-6 py-2 font-black text-xs hover:bg-emerald-400 transition-colors uppercase">Enviar</button>
                             </div>
                         </div>
                     </main>
@@ -149,9 +147,8 @@
             );
         }
 
-        // 4. RENDERIZAÇÃO (Formato React 18)
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(Dashboard));
+        root.render(<Dashboard />);
     </script>
 </body>
 </html>
