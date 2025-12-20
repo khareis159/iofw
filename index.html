@@ -116,19 +116,28 @@
                 } finally { setCarregando(false); }
             };
 
+const limparChat = () => {
+                if(confirm("Deseja limpar as mensagens e resquícios do laboratório?")) {
+                    db.ref(`pioneiros/${alunoID}/historico`).remove();
+                    setMensagens([]);
+                }
+            };
+
             const publicarBiblioteca = () => {
                 if (mensagens.length < 2) {
-                    alert("Inicie um diálogo antes de publicar!");
+                    alert("Aguarde a resposta do Tutor antes de publicar!");
                     return;
                 }
                 const titulo = prompt("Título para a Biblioteca KhareisBook:");
                 if (titulo) {
+                    const s_rigor = Number(stats.rigor) || 10;
+                    const s_simb = Number(stats.simbiose) || 10;
                     db.ref('mural_publico').push({
-                        titulo, autor: alunoID, data: new Date().toLocaleDateString(),
-                        resumo: mensagens[mensagens.length - 1].texto.substring(0, 150) + "...",
-                        simbiose: stats.simbiose, timestamp: Date.now()
+                        titulo: titulo, autor: alunoID, data: new Date().toLocaleDateString(),
+                        resumo: mensagens[mensagens.length - 1].texto.substring(0, 180) + "...",
+                        simbiose: s_simb, rigor: s_rigor, timestamp: Date.now()
                     });
-                    alert("Publicado com sucesso!");
+                    alert("Publicado com sucesso na Biblioteca Gold!");
                 }
             };
 
@@ -164,7 +173,15 @@
                                 const blob = new Blob([mensagens.map(m => `[${m.autor}]: ${m.texto}`).join('\n\n')], {type: 'text/plain'});
                                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Legado.txt'; a.click();
                             }} className="w-full border border-[#8957e540] py-3 rounded text-[10px] font-bold text-[#8957e5] uppercase hover:bg-[#8957e510]">📜 Exportar Legado</button>
-                            <button onClick={publicarBiblioteca} className="w-full border border-[#23863650] py-3 rounded text-[10px] font-bold text-[#238636] uppercase hover:bg-[#23863610]">🌐 Publicar na Biblioteca</button>
+  
+<button onClick={publicarBiblioteca} className="w-full border border-[#23863650] py-3 rounded text-[10px] font-bold text-[#238636] uppercase hover:bg-[#23863610] mt-2">
+    🌐 Publicar na Biblioteca
+</button>
+
+<button onClick={limparChat} className="w-full text-[8px] opacity-20 hover:opacity-100 uppercase mt-4 text-red-500 transition-all">
+    🗑️ Limpar Resquícios
+</button>
+                            
                         </div>
 
                         <footer className="mt-auto pt-8 text-center border-t border-[#30363d]">
