@@ -30,6 +30,9 @@
         .stats-fill { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
         .glow-green { text-shadow: 0 0 10px #238636; }
         .bg-grid { background-image: linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px); background-size: 50px 50px; }
+.medal-animate { animation: appear 0.5s ease-out forwards; }
+        @keyframes appear { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+    
     </style>
 </head>
 <body>
@@ -117,12 +120,16 @@
             };
 
 const limparChat = () => {
-                if(confirm("Deseja limpar as mensagens e resquícios do laboratório?")) {
+                if(confirm("Deseja limpar os resquícios do laboratório?")) {
                     db.ref(`pioneiros/${alunoID}/historico`).remove();
-                    setMensagens([]);
+                    // Reinicia com a saudação oficial para não ficar tela preta
+                    setMensagens([{ 
+                        autor: 'Tutor', 
+                        texto: `Matriz Reiniciada, ${alunoID}. Sistema de Antropologia Realista pronto para nova forja.` 
+                    }]);
+                    alert("Laboratório Higienizado.");
                 }
             };
-
             const publicarBiblioteca = () => {
                 if (mensagens.length < 2) {
                     alert("Aguarde a resposta do Tutor antes de publicar!");
@@ -180,9 +187,19 @@ const limparChat = () => {
 
 <button onClick={limparChat} className="w-full text-[8px] opacity-20 hover:opacity-100 uppercase mt-4 text-red-500 transition-all">
     🗑️ Limpar Resquícios
-</button>
-                            
-                        </div>
+</button>                            
+                       </div>
+
+{/* Painel de Medalhas (Conquistas Dinâmicas) */}
+                        <div className="mt-8 border-t border-[#30363d] pt-6">
+                            <h3 className="text-[10px] font-bold opacity-40 mb-4 uppercase tracking-widest text-[#238636]">Conquistas de Carreira</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {stats.rigor >= 15 && <span className="medal-animate bg-[#23863620] border border-[#23863670] text-[#238636] text-[8px] px-2 py-1 rounded font-bold uppercase tracking-tighter shadow-[0_0_10px_rgba(35,134,54,0.1)]">✓ REALISTA</span>}
+                                {stats.imaginacao >= 15 && <span className="medal-animate bg-[#8957e520] border border-[#8957e570] text-[#8957e5] text-[8px] px-2 py-1 rounded font-bold uppercase tracking-tighter shadow-[0_0_10px_rgba(137,87,229,0.1)]">✓ ESTETA</span>}
+                                {stats.simbiose >= 50 && <span className="medal-animate bg-white text-black text-[8px] px-2 py-1 rounded font-black animate-pulse uppercase">Mestre OESD</span>}
+                            </div>
+                        </div>                        
+                        
 
                         <footer className="mt-auto pt-8 text-center border-t border-[#30363d]">
                             <p className="text-[9px] opacity-30 uppercase tracking-widest mono leading-relaxed">© 2025 Carlos Alberto Reis<br/>Propriedade Intelectual Protegida</p>
