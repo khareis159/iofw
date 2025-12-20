@@ -190,6 +190,28 @@
                             <button onClick={exportarLegado} className="w-full text-center bg-[#8957e515] border border-[#8957e540] py-3 rounded-lg text-[10px] hover:bg-[#8957e530] transition-all font-bold text-[#8957e5] uppercase tracking-wider">
                                 📜 Exportar Legado
                             </button>
+{/* BOTÃO DE INTEGRAÇÃO COM A BIBLIOTECA KHAREISBOOK */}
+<button 
+    onClick={() => {
+        const titulo = prompt("Dê um título para este volume da biblioteca (ex: Antropologia Realista vs Idealista):");
+        if(titulo) {
+            db.ref('mural_publico').push({
+                titulo: titulo,
+                autor: alunoID,
+                data: new Date().toLocaleDateString(),
+                resumo: mensagens[mensagens.length - 1].texto.substring(0, 150) + "...",
+                link_origem: window.location.href,
+                simbiose: stats.simbiose,
+                timestamp: Date.now()
+            });
+            alert("Sucesso! Este conhecimento foi enviado para a fila de curadoria da Biblioteca KhareisBook.");
+        }
+    }}
+    className="w-full text-center bg-[#23863615] border border-[#23863650] py-3 rounded-lg text-[10px] hover:bg-[#23863630] transition-all font-bold text-[#238636] uppercase tracking-wider mt-2"
+>
+    🌐 Publicar na Biblioteca Viva
+</button>
+                        
                         </div>
 
                         {/* Painel de Medalhas (Conquistas) */}
