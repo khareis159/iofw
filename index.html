@@ -2,7 +2,7 @@
     COPYRIGHT: © 2025 Carlos Alberto Reis 
     PROJECT: Faculdade Simbiótica HyperWeb3 
     METHODOLOGY: OESD (Ordem Epistemológica de Simbiose Digital)
-    PHASE: 2 - APP CONSOLIDADO
+    PHASE: 2 - APP CONSOLIDADO (VERSÃO DEPURADA 2.1)
 -->
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -11,7 +11,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OESD | Faculdade Simbiótica HyperWeb3</title>
     
-    <!-- Bibliotecas de Alta Performance -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -21,29 +20,22 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
-        
         body { background-color: #010409; color: #c9d1d9; font-family: 'Space Grotesk', sans-serif; margin: 0; overflow: hidden; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
         .border-oesd { border: 1px solid #30363d; background: #0d1117; transition: all 0.3s ease; }
         .border-oesd:hover { border-color: #238636; box-shadow: 0 0 15px rgba(35, 134, 54, 0.1); }
-        
         .chat-scroll::-webkit-scrollbar { width: 3px; }
         .chat-scroll::-webkit-scrollbar-thumb { background: #238636; border-radius: 10px; }
-        
         .stats-bar { height: 4px; border-radius: 2px; background: #21262d; overflow: hidden; }
         .stats-fill { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-        
         .glow-green { text-shadow: 0 0 10px #238636; }
-        .medal-animate { animation: appear 0.5s ease-out forwards; }
-        @keyframes appear { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .bg-grid { background-image: linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px); background-size: 50px 50px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // Configuração Segura do Firebase
         const firebaseConfig = { databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -51,48 +43,31 @@
         const { useState, useEffect, useRef } = React;
 
         function App() {
-            // --- NÚCLEO DE CONFIGURAÇÃO ---
-            const CHAVE_IA = "COLE_AQUI_SUA_CHAVE_GSK"; 
+            // ============================================================
+            // CONFIGURAÇÃO: INSIRA SUA CHAVE ABAIXO (MANTENHA AS ASPAS)
+            const CHAVE_IA = "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"; 
+            // ============================================================
+
             const [alunoID, setAlunoID] = useState(localStorage.getItem('alunoID') || "");
             const [nomeInput, setNomeInput] = useState("");
-            
             const [stats, setStats] = useState({ rigor: 10, imaginacao: 10, simbiose: 10 });
             const [mensagens, setMensagens] = useState([]);
             const [input, setInput] = useState("");
             const [carregando, setCarregando] = useState(false);
             const chatRef = useRef(null);
 
-            // Sincronização em Tempo Real com Firebase
             useEffect(() => {
                 if (alunoID) {
                     db.ref(`pioneiros/${alunoID}/stats`).on('value', (s) => s.val() && setStats(s.val()));
                     db.ref(`pioneiros/${alunoID}/historico`).on('value', (s) => {
                         const data = s.val();
                         if (data) setMensagens(Object.values(data));
-                        else setMensagens([{ autor: 'Tutor', texto: `Saudações, ${alunoID}. A Matriz Simbiótica está pronta. Qual lacuna da antropologia realista vamos preencher hoje?` }]);
+                        else setMensagens([{ autor: 'Tutor', texto: `Bem-vindo, ${alunoID}. A Matriz está pronta.` }]);
                     });
                 }
             }, [alunoID]);
 
-            // Auto-scroll do chat
             useEffect(() => { chatRef.current?.scrollTo(0, chatRef.current.scrollHeight); }, [mensagens]);
-
-            const fazerLogin = () => {
-                if (nomeInput.trim()) {
-                    localStorage.setItem('alunoID', nomeInput.trim());
-                    setAlunoID(nomeInput.trim());
-                }
-            };
-
-            const exportarLegado = () => {
-                const conteudo = mensagens.map(m => `[${m.autor.toUpperCase()}]: ${m.texto}`).join('\n\n');
-                const cabecalho = `FACULDADE ÍNTEGRA - LEGADO OESD\nAUTOR: ${alunoID}\nDATA: ${new Date().toLocaleDateString()}\nSIMBIOSE: ${stats.simbiose}%\n------------------------------------------\n\n`;
-                const blob = new Blob([cabecalho + conteudo], { type: 'text/plain' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `Legado_OESD_${alunoID}.txt`;
-                link.click();
-            };
 
             const enviar = async () => {
                 if (!input || carregando) return;
@@ -100,172 +75,121 @@
                 setInput("");
                 setCarregando(true);
 
-                // Grava no Firebase o input do aluno
-                const novaMsg = { autor: alunoID, texto: textoUser, timestamp: Date.now() };
-                db.ref(`pioneiros/${alunoID}/historico`).push(novaMsg);
+                // Salva pergunta do aluno
+                db.ref(`pioneiros/${alunoID}/historico`).push({ autor: alunoID, texto: textoUser, timestamp: Date.now() });
 
                 try {
+                    if (CHAVE_IA.includes("COLE_AQUI")) throw new Error("Chave IA não configurada na linha 42.");
+
                     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                         method: "POST",
-                        headers: { "Authorization": `Bearer ${CHAVE_IA}`, "Content-Type": "application/json" },
+                        headers: { "Authorization": `Bearer ${CHAVE_IA.trim()}`, "Content-Type": "application/json" },
                         body: JSON.stringify({
                             model: "llama-3.1-8b-instant",
                             messages: [
-                                { role: "system", content: "Você é o Tutor Simbiótico. Sua missão é equilibrar a Antropologia Realista com a Idealista. Use rigor científico absoluto e imaginação estética em suas respostas." },
+                                { role: "system", content: "Você é o Tutor Simbiótico OESD. Responda com Rigor Científico e Imaginação Estética." },
                                 { role: "user", content: textoUser }
                             ]
                         })
                     });
+
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        throw new Error(errData.error?.message || "Erro na conexão");
+                    }
+
                     const data = await res.json();
-                    const resposta = data.choices[0].message.content;
+                    const respostaIA = data.choices[0].message.content;
 
-                    // Grava no Firebase a resposta do Tutor
-                    db.ref(`pioneiros/${alunoID}/historico`).push({ autor: 'Tutor', texto: resposta, timestamp: Date.now() });
+                    // Salva resposta do Tutor
+                    db.ref(`pioneiros/${alunoID}/historico`).push({ autor: 'Tutor', texto: respostaIA, timestamp: Date.now() });
 
-                    // Evolução de Stats baseada na interação
-                    const novosStats = {
-                        rigor: Math.min(stats.rigor + 3, 100),
-                        imaginacao: Math.min(stats.imaginacao + 5, 100),
-                        simbiose: Math.min(Math.round((stats.rigor + stats.imaginacao + 5) / 2), 100)
-                    };
-                    db.ref(`pioneiros/${alunoID}/stats`).set(novosStats);
+                    // Atualização segura de Stats
+                    db.ref(`pioneiros/${alunoID}/stats`).transaction((curr) => {
+                        const r = (curr?.rigor || 10) + 3;
+                        const i = (curr?.imaginacao || 10) + 5;
+                        return { rigor: Math.min(r, 100), imaginacao: Math.min(i, 100), simbiose: Math.min(Math.round((r + i) / 2), 100) };
+                    });
 
                 } catch (e) {
-                    console.error("Erro na IA:", e);
+                    db.ref(`pioneiros/${alunoID}/historico`).push({ autor: 'SISTEMA', texto: `⚠️ AVISO: ${e.message}` });
                 } finally { setCarregando(false); }
             };
 
-            // TELA DE LOGIN (PIONEIRO)
+            const publicarBiblioteca = () => {
+                if (mensagens.length < 2) {
+                    alert("Inicie um diálogo antes de publicar!");
+                    return;
+                }
+                const titulo = prompt("Título para a Biblioteca KhareisBook:");
+                if (titulo) {
+                    db.ref('mural_publico').push({
+                        titulo, autor: alunoID, data: new Date().toLocaleDateString(),
+                        resumo: mensagens[mensagens.length - 1].texto.substring(0, 150) + "...",
+                        simbiose: stats.simbiose, timestamp: Date.now()
+                    });
+                    alert("Publicado com sucesso!");
+                }
+            };
+
             if (!alunoID) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center bg-[#010409] p-6">
-                        <div className="border-oesd p-10 rounded-2xl max-w-md w-full text-center shadow-2xl">
-                            <h1 className="text-3xl font-bold mb-2 text-[#238636] mono glow-green tracking-tighter">OESD // PIONEIRO</h1>
-                            <p className="text-[10px] opacity-50 mb-8 uppercase tracking-[0.4em]">Faculdade Simbiótica HyperWeb3</p>
-                            <input 
-                                value={nomeInput} onChange={e => setNomeInput(e.target.value)}
-                                onKeyPress={e => e.key === 'Enter' && fazerLogin()}
-                                className="w-full bg-black border border-[#30363d] p-4 rounded-lg mb-4 outline-none focus:border-[#238636] text-center text-white"
-                                placeholder="Nome ou Pseudônimo"
-                            />
-                            <button onClick={fazerLogin} className="w-full bg-[#238636] text-white py-4 rounded-lg font-bold hover:bg-[#2ea043] transition-all uppercase text-xs tracking-widest">Acessar Matriz</button>
-                            <p className="mt-6 text-[9px] opacity-30 mono uppercase">© 2025 Carlos Alberto Reis</p>
+                    <div className="min-h-screen flex items-center justify-center bg-[#010409]">
+                        <div className="border-oesd p-10 rounded-2xl max-w-md w-full text-center">
+                            <h1 className="text-3xl font-bold mb-2 text-[#238636] mono glow-green tracking-tighter uppercase">OESD // Pioneiro</h1>
+                            <input value={nomeInput} onChange={e => setNomeInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && setAlunoID(nomeInput.trim())} className="w-full bg-black border border-[#30363d] p-4 rounded-lg my-6 outline-none focus:border-[#238636] text-center text-white" placeholder="Seu Nome ou Pseudônimo"/>
+                            <button onClick={() => setAlunoID(nomeInput.trim())} className="w-full bg-[#238636] text-white py-4 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-[#2ea043]">Acessar Matriz</button>
                         </div>
                     </div>
                 );
             }
 
-            // DASHBOARD PRINCIPAL (FASE 2)
             return (
                 <div className="h-screen flex flex-col md:flex-row">
-                    
-                    {/* BARRA LATERAL (SIDEBAR) */}
                     <aside className="w-full md:w-80 bg-[#0d1117] border-r border-[#30363d] p-6 flex flex-col overflow-y-auto chat-scroll">
                         <div className="mb-8">
-                            <h1 className="text-xl font-bold text-[#238636] mono tracking-tighter">HYPERWEB3</h1>
+                            <h1 className="text-xl font-bold text-[#238636] mono">HYPERWEB3</h1>
                             <p className="text-[9px] opacity-40 uppercase tracking-widest">Soberania Epistêmica</p>
                         </div>
 
-                        {/* Painel de Atributos */}
                         <div className="space-y-6">
-                            <div>
-                                <div className="flex justify-between text-[10px] mb-2 font-bold opacity-60"><span>RIGOR CIENTÍFICO</span><span>{stats.rigor}%</span></div>
-                                <div className="stats-bar"><div className="stats-fill bg-[#238636]" style={{width: `${stats.rigor}%`}}></div></div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between text-[10px] mb-2 font-bold opacity-60"><span>IMAGINAÇÃO ESTÉTICA</span><span>{stats.imaginacao}%</span></div>
-                                <div className="stats-bar"><div className="stats-fill bg-[#8957e5]" style={{width: `${stats.imaginacao}%`}}></div></div>
-                            </div>
-                            <div className="pt-6 border-t border-[#30363d] text-center">
-                                <span className="text-[10px] opacity-40 block mb-1 uppercase font-bold tracking-widest">Índice de Simbiose</span>
-                                <span className="text-5xl font-bold text-white mono">{stats.simbiose}%</span>
-                            </div>
+                            <div><div className="flex justify-between text-[10px] mb-2 font-bold opacity-60 uppercase"><span>Rigor</span><span>{stats.rigor}%</span></div><div className="stats-bar"><div className="stats-fill bg-[#238636]" style={{width: `${stats.rigor}%`}}></div></div></div>
+                            <div><div className="flex justify-between text-[10px] mb-2 font-bold opacity-60 uppercase"><span>Imaginação</span><span>{stats.imaginacao}%</span></div><div className="stats-bar"><div className="stats-fill bg-[#8957e5]" style={{width: `${stats.imaginacao}%`}}></div></div></div>
+                            <div className="pt-6 border-t border-[#30363d] text-center"><span className="text-[10px] opacity-40 block mb-1 uppercase font-bold tracking-widest">Simbiose</span><span className="text-5xl font-bold text-white mono">{stats.simbiose}%</span></div>
                         </div>
 
-                        {/* Botões de Ação Fase 2 */}
                         <div className="mt-8 space-y-3">
-                            <a href="manual.html" target="_blank" className="block text-center border border-[#23863650] py-3 rounded-lg text-[10px] hover:bg-[#23863620] transition-all font-bold text-[#238636] uppercase tracking-wider">
-                                📖 Manual Acadêmico
-                            </a>
-                            <button onClick={exportarLegado} className="w-full text-center bg-[#8957e515] border border-[#8957e540] py-3 rounded-lg text-[10px] hover:bg-[#8957e530] transition-all font-bold text-[#8957e5] uppercase tracking-wider">
-                                📜 Exportar Legado
-                            </button>
-{/* BOTÃO DE INTEGRAÇÃO COM A BIBLIOTECA KHAREISBOOK */}
-<button 
-    onClick={() => {
-        const titulo = prompt("Dê um título para este volume da biblioteca (ex: Antropologia Realista vs Idealista):");
-        if(titulo) {
-            db.ref('mural_publico').push({
-                titulo: titulo,
-                autor: alunoID,
-                data: new Date().toLocaleDateString(),
-                resumo: mensagens[mensagens.length - 1].texto.substring(0, 150) + "...",
-                link_origem: window.location.href,
-                simbiose: stats.simbiose,
-                timestamp: Date.now()
-            });
-            alert("Sucesso! Este conhecimento foi enviado para a fila de curadoria da Biblioteca KhareisBook.");
-        }
-    }}
-    className="w-full text-center bg-[#23863615] border border-[#23863650] py-3 rounded-lg text-[10px] hover:bg-[#23863630] transition-all font-bold text-[#238636] uppercase tracking-wider mt-2"
->
-    🌐 Publicar na Biblioteca Viva
-</button>
-                        
+                            <a href="manual.html" target="_blank" className="block text-center border border-[#23863650] py-3 rounded text-[10px] font-bold text-[#238636] uppercase hover:bg-[#23863610]">📖 Manual Acadêmico</a>
+                            <button onClick={() => { 
+                                const blob = new Blob([mensagens.map(m => `[${m.autor}]: ${m.texto}`).join('\n\n')], {type: 'text/plain'});
+                                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Legado.txt'; a.click();
+                            }} className="w-full border border-[#8957e540] py-3 rounded text-[10px] font-bold text-[#8957e5] uppercase hover:bg-[#8957e510]">📜 Exportar Legado</button>
+                            <button onClick={publicarBiblioteca} className="w-full border border-[#23863650] py-3 rounded text-[10px] font-bold text-[#238636] uppercase hover:bg-[#23863610]">🌐 Publicar na Biblioteca</button>
                         </div>
 
-                        {/* Painel de Medalhas (Conquistas) */}
-                        <div className="mt-8 border-t border-[#30363d] pt-6">
-                            <h3 className="text-[10px] font-bold opacity-40 mb-4 uppercase tracking-widest">Células de Carreira</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {stats.rigor >= 20 && <span className="medal-animate bg-[#23863620] border border-[#23863670] text-[#238636] text-[8px] px-2 py-1 rounded font-bold">✓ REALISTA</span>}
-                                {stats.imaginacao >= 20 && <span className="medal-animate bg-[#8957e520] border border-[#8957e570] text-[#8957e5] text-[8px] px-2 py-1 rounded font-bold">✓ ESTETA</span>}
-                                {stats.simbiose >= 50 && <span className="medal-animate bg-white text-black text-[8px] px-2 py-1 rounded font-black animate-pulse uppercase">Mestre OESD</span>}
-                            </div>
-                        </div>
-
-                        {/* COPYRIGHT FOOTER */}
                         <footer className="mt-auto pt-8 text-center border-t border-[#30363d]">
-                            <p className="text-[9px] opacity-30 uppercase tracking-[0.2em] leading-relaxed mono">
-                                © 2025 Carlos Alberto Reis<br/>
-                                <span className="text-[7px]">Propriedade Intelectual Protegida</span>
-                            </p>
-                            <button onClick={() => { localStorage.clear(); location.reload(); }} className="mt-4 text-[8px] opacity-20 hover:opacity-100 uppercase transition-all">Sair: {alunoID}</button>
+                            <p className="text-[9px] opacity-30 uppercase tracking-widest mono leading-relaxed">© 2025 Carlos Alberto Reis<br/>Propriedade Intelectual Protegida</p>
+                            <button onClick={() => { localStorage.clear(); location.reload(); }} className="mt-4 text-[8px] opacity-20 uppercase hover:opacity-100">Sair: {alunoID}</button>
                         </footer>
                     </aside>
 
-                    {/* ÁREA DE CHAT (INTERFACE DE FORJA) */}
                     <main className="flex-1 flex flex-col bg-[#010409]">
-                        <header className="p-4 border-b border-[#30363d] flex justify-between items-center bg-[#0d1117]/50 backdrop-blur-md">
-                            <span className="text-[10px] mono opacity-50 uppercase tracking-widest">Laboratório de Co-criação // Online</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-[10px] mono opacity-50">Link: iofw-79391</span>
-                            </div>
-                        </header>
-
-                        <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-8 chat-scroll bg-grid">
+                        <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-6 chat-scroll bg-grid">
                             {mensagens.map((m, i) => (
-                                <div key={i} className={`flex ${m.autor === 'Tutor' ? 'justify-start' : 'justify-end'}`}>
-                                    <div className={`max-w-[85%] p-5 rounded-2xl text-sm leading-relaxed border transition-all ${m.autor === 'Tutor' ? 'bg-[#0d1117] border-[#30363d] text-[#c9d1d9] shadow-lg' : 'bg-[#23863610] border-[#23863640] text-white'}`}>
-                                        <span className={`text-[8px] font-bold block mb-3 uppercase tracking-widest mono ${m.autor === 'Tutor' ? 'text-[#8957e5]' : 'text-[#238636]'}`}>{m.autor}</span>
+                                <div key={i} className={`flex ${m.autor === 'Tutor' || m.autor === 'SISTEMA' ? 'justify-start' : 'justify-end'}`}>
+                                    <div className={`max-w-[85%] p-4 rounded-xl text-sm leading-relaxed border ${m.autor === 'Tutor' ? 'bg-[#0d1117] border-[#30363d] text-[#c9d1d9]' : m.autor === 'SISTEMA' ? 'bg-red-900/10 border-red-500/50 text-red-500 font-bold' : 'bg-[#23863610] border-[#23863640] text-white'}`}>
+                                        <span className={`text-[8px] font-bold block mb-2 uppercase tracking-widest mono ${m.autor === 'Tutor' ? 'text-[#8957e5]' : m.autor === 'SISTEMA' ? 'text-red-500' : 'text-[#238636]'}`}>{m.autor}</span>
                                         <div className="whitespace-pre-wrap">{m.texto}</div>
                                     </div>
                                 </div>
                             ))}
-                            {carregando && <div className="text-[10px] animate-pulse text-[#238636] mono text-center uppercase tracking-widest">Sincronizando com a Matriz de Conhecimento...</div>}
+                            {carregando && <div className="text-[10px] animate-pulse text-[#238636] text-center mono uppercase tracking-widest">Sincronizando com a Matriz...</div>}
                         </div>
 
-                        {/* Campo de Entrada */}
-                        <div className="p-6 bg-[#0d1117] border-t border-[#30363d] shadow-2xl">
+                        <div className="p-6 bg-[#0d1117] border-t border-[#30363d]">
                             <div className="max-w-4xl mx-auto flex gap-4">
-                                <input 
-                                    value={input} onChange={e => setInput(e.target.value)}
-                                    onKeyPress={e => e.key === 'Enter' && enviar()}
-                                    className="flex-1 bg-black border border-[#30363d] p-4 rounded-xl outline-none focus:border-[#238636] text-sm text-emerald-50 placeholder-gray-600 transition-all"
-                                    placeholder="Proponha um raciocínio, desafie a lógica ou co-crie..."
-                                />
-                                <button onClick={enviar} disabled={carregando} className="bg-[#238636] text-white px-10 rounded-xl font-bold hover:bg-[#2ea043] transition-all uppercase text-[10px] tracking-widest disabled:opacity-20">Forjar</button>
+                                <input value={input} onChange={e => setInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && enviar()} className="flex-1 bg-black border border-[#30363d] p-4 rounded-xl outline-none focus:border-[#238636] text-sm text-emerald-50" placeholder="Questione, proponha ou co-crie..."/>
+                                <button onClick={enviar} disabled={carregando} className="bg-[#238636] text-white px-8 rounded-xl font-bold uppercase text-[10px] tracking-widest disabled:opacity-30">Forjar</button>
                             </div>
                         </div>
                     </main>
