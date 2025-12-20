@@ -32,5 +32,5 @@ Faculdade Simbiótica HyperWeb3.
    Faculdade Simbiótica.
 
 -----------------------------------------------------------------------
-PIONEIROS DA ANTROPOLOGIA REALISTA. O SABER É A ÚNICA SOBERANIA.
+PIONEIROS DA ANTROPOLOGIA REALISTA. O SABER _É _A _ÚNICA _SOBERANIA.
 -----------------------------------------------------------------------
