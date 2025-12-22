@@ -1,231 +1,410 @@
 <!-- 
-    COPYRIGHT: © 2025 Carlos Alberto Reis 
+    COPYRIGHT: © 2026 Carlos Alberto Reis 
     PROJECT: Faculdade Simbiótica HyperWeb3 
-    METHODOLOGY: OESD (Ordem Epistemológica de Simbiose Digital)
-    PHASE: 2 - APP CONSOLIDADO (VERSÃO DEPURADA 2.1)
+    VERSION: 3.0 (Bridge to KhareisBook Library)
+    STATUS: Stable & Integrated
 -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OESD | Faculdade Simbiótica HyperWeb3</title>
+    <title>OESD | Faculdade Simbiótica</title>
     
+    <!-- React Core -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- UI Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
         body { background-color: #010409; color: #c9d1d9; font-family: 'Space Grotesk', sans-serif; margin: 0; overflow: hidden; }
         .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Cyberpunk UI */
         .border-oesd { border: 1px solid #30363d; background: #0d1117; transition: all 0.3s ease; }
         .border-oesd:hover { border-color: #238636; box-shadow: 0 0 15px rgba(35, 134, 54, 0.1); }
-        .chat-scroll::-webkit-scrollbar { width: 3px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #238636; border-radius: 10px; }
+        
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #238636; border-radius: 2px; }
+        
         .stats-bar { height: 4px; border-radius: 2px; background: #21262d; overflow: hidden; }
         .stats-fill { height: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        
         .glow-green { text-shadow: 0 0 10px #238636; }
-        .bg-grid { background-image: linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px); background-size: 50px 50px; }
-.medal-animate { animation: appear 0.5s ease-out forwards; }
+        .bg-grid { 
+            background-image: linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px); 
+            background-size: 50px 50px; 
+        }
+        
+        .medal-animate { animation: appear 0.5s ease-out forwards; }
         @keyframes appear { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
-    
+
+        /* Loader para Publicação */
+        .publish-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 50;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const firebaseConfig = { databaseURL: "https://iofw-79391-default-rtdb.firebaseio.com/" };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // --- 1. CONFIGURAÇÃO DE INTEGRAÇÃO (USANDO BANCO DA BIBLIOTECA) ---
+        const DATABASE_URL = "https://khareisbook-default-rtdb.firebaseio.com/"; 
+        const COUNTER_URL = DATABASE_URL + "contador_v2.json";
+        
+        // CHAVE IA (Mantida da sua versão anterior)
+        const CHAVE_IA = "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"; 
 
+        // --- MÓDULO REACT ---
         const { useState, useEffect, useRef } = React;
 
         function App() {
-            // ============================================================
-            // CONFIGURAÇÃO: INSIRA SUA CHAVE ABAIXO (MANTENHA AS ASPAS)
-            const CHAVE_IA = "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"; 
-            // ============================================================
-
             const [alunoID, setAlunoID] = useState(localStorage.getItem('alunoID') || "");
             const [nomeInput, setNomeInput] = useState("");
             const [stats, setStats] = useState({ rigor: 10, imaginacao: 10, simbiose: 10 });
             const [mensagens, setMensagens] = useState([]);
             const [input, setInput] = useState("");
             const [carregando, setCarregando] = useState(false);
+            const [publicando, setPublicando] = useState(false);
+            const [visits, setVisits] = useState(1000);
             const chatRef = useRef(null);
 
+            // --- SINCRONIZAÇÃO DE VISITAS ---
+            useEffect(() => {
+                const contarVisita = async () => {
+                    try {
+                        let res = await fetch(COUNTER_URL);
+                        let val = await res.json();
+                        let n = (!val || isNaN(val)) ? 1000 : Number(val);
+                        
+                        if(!sessionStorage.getItem('kb_sync_v1')) {
+                            n++;
+                            await fetch(COUNTER_URL, {method:'PUT', body:String(n)});
+                            sessionStorage.setItem('kb_sync_v1', 'true');
+                        }
+                        setVisits(n);
+                    } catch(e) { console.log("Sync error"); }
+                };
+                contarVisita();
+            }, []);
+
+            // --- CARREGAR DADOS DO ALUNO (DB PIONEIROS) ---
             useEffect(() => {
                 if (alunoID) {
-                    db.ref(`pioneiros/${alunoID}/stats`).on('value', (s) => s.val() && setStats(s.val()));
-                    db.ref(`pioneiros/${alunoID}/historico`).on('value', (s) => {
-                        const data = s.val();
-                        if (data) setMensagens(Object.values(data));
-                        else setMensagens([{ autor: 'Tutor', texto: `Bem-vindo, ${alunoID}. A Matriz está pronta.` }]);
-                    });
+                    // Carrega Stats
+                    fetch(`${DATABASE_URL}pioneiros/${alunoID}/stats.json`)
+                        .then(r => r.json()).then(d => d && setStats(d));
+                    
+                    // Carrega Chat
+                    fetch(`${DATABASE_URL}pioneiros/${alunoID}/historico.json`)
+                        .then(r => r.json()).then(d => {
+                            if(d) setMensagens(Object.values(d));
+                            else setMensagens([{ autor: 'Tutor', texto: `Bem-vindo à Forja, ${alunoID}. OESD Ativo.` }]);
+                        });
+                    
+                    localStorage.setItem('alunoID', alunoID);
                 }
             }, [alunoID]);
 
+            // Scroll automático do chat
             useEffect(() => { chatRef.current?.scrollTo(0, chatRef.current.scrollHeight); }, [mensagens]);
 
+            // --- 2. MOTOR DE COMUNICAÇÃO COM A IA ---
             const enviar = async () => {
                 if (!input || carregando) return;
                 const textoUser = input;
                 setInput("");
                 setCarregando(true);
 
-                // Salva pergunta do aluno
-                db.ref(`pioneiros/${alunoID}/historico`).push({ autor: alunoID, texto: textoUser, timestamp: Date.now() });
+                const novoMsgUser = { autor: alunoID, texto: textoUser, timestamp: Date.now() };
+                
+                // Atualiza visual local
+                setMensagens(prev => [...prev, novoMsgUser]);
+                // Salva no DB
+                fetch(`${DATABASE_URL}pioneiros/${alunoID}/historico.json`, { method:'POST', body:JSON.stringify(novoMsgUser) });
 
                 try {
-                    if (CHAVE_IA.includes("COLE_AQUI")) throw new Error("Chave IA não configurada na linha 42.");
-
                     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                         method: "POST",
                         headers: { "Authorization": `Bearer ${CHAVE_IA.trim()}`, "Content-Type": "application/json" },
                         body: JSON.stringify({
                             model: "llama-3.1-8b-instant",
                             messages: [
-                                { role: "system", content: "Você é o Tutor Simbiótico OESD. Responda com Rigor Científico e Imaginação Estética." },
+                                { role: "system", content: "Você é o Tutor OESD. Seja breve, acadêmico e desafiador. Responda em Português." },
                                 { role: "user", content: textoUser }
                             ]
                         })
                     });
 
-                    if (!res.ok) {
-                        const errData = await res.json();
-                        throw new Error(errData.error?.message || "Erro na conexão");
-                    }
-
                     const data = await res.json();
                     const respostaIA = data.choices[0].message.content;
+                    const novoMsgIA = { autor: 'Tutor', texto: respostaIA, timestamp: Date.now() };
 
-                    // Salva resposta do Tutor
-                    db.ref(`pioneiros/${alunoID}/historico`).push({ autor: 'Tutor', texto: respostaIA, timestamp: Date.now() });
+                    // Salva Resposta
+                    setMensagens(prev => [...prev, novoMsgIA]);
+                    fetch(`${DATABASE_URL}pioneiros/${alunoID}/historico.json`, { method:'POST', body:JSON.stringify(novoMsgIA) });
 
-                    // Atualização segura de Stats
-                    db.ref(`pioneiros/${alunoID}/stats`).transaction((curr) => {
-                        const r = (curr?.rigor || 10) + 3;
-                        const i = (curr?.imaginacao || 10) + 5;
-                        return { rigor: Math.min(r, 100), imaginacao: Math.min(i, 100), simbiose: Math.min(Math.round((r + i) / 2), 100) };
-                    });
+                    // Evolui Stats
+                    const novosStats = {
+                        rigor: Math.min(stats.rigor + 2, 100),
+                        imaginacao: Math.min(stats.imaginacao + 2, 100),
+                        simbiose: Math.min(Math.round(((stats.rigor+2) + (stats.imaginacao+2))/2), 100)
+                    };
+                    setStats(novosStats);
+                    fetch(`${DATABASE_URL}pioneiros/${alunoID}/stats.json`, { method:'PUT', body:JSON.stringify(novosStats) });
 
                 } catch (e) {
-                    db.ref(`pioneiros/${alunoID}/historico`).push({ autor: 'SISTEMA', texto: `⚠️ AVISO: ${e.message}` });
+                    console.error(e);
                 } finally { setCarregando(false); }
             };
 
-const limparChat = () => {
-                if(confirm("Deseja limpar os resquícios do laboratório?")) {
-                    db.ref(`pioneiros/${alunoID}/historico`).remove();
-                    // Reinicia com a saudação oficial para não ficar tela preta
-                    setMensagens([{ 
-                        autor: 'Tutor', 
-                        texto: `Matriz Reiniciada, ${alunoID}. Sistema de Antropologia Realista pronto para nova forja.` 
-                    }]);
-                    alert("Laboratório Higienizado.");
-                }
+            // --- 3. GERADOR DE CAPA (CANVAS MÁGICO) ---
+            const gerarCapaAutomatica = (titulo) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 400; canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+
+                // Fundo Dark Acadêmico
+                const grd = ctx.createLinearGradient(0, 0, 0, 600);
+                grd.addColorStop(0, "#010409");
+                grd.addColorStop(1, "#0d1117");
+                ctx.fillStyle = grd;
+                ctx.fillRect(0,0,400,600);
+
+                // Bordas
+                ctx.strokeStyle = "#238636";
+                ctx.lineWidth = 10;
+                ctx.strokeRect(20, 20, 360, 560);
+
+                // Textos
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                
+                // Título
+                ctx.font = "bold 30px 'Courier New', monospace";
+                wrapText(ctx, titulo.toUpperCase(), 200, 200, 300, 35);
+
+                // Selo OESD
+                ctx.fillStyle = "#238636";
+                ctx.font = "bold 20px sans-serif";
+                ctx.fillText("FACULDADE ÍNTEGRA", 200, 450);
+                
+                // Autor
+                ctx.fillStyle = "#8b949e";
+                ctx.font = "italic 18px serif";
+                ctx.fillText(`Pioneiro: ${alunoID}`, 200, 500);
+
+                return canvas.toDataURL("image/jpeg", 0.7);
             };
-            const publicarBiblioteca = () => {
-                if (mensagens.length < 2) {
-                    alert("Aguarde a resposta do Tutor antes de publicar!");
-                    return;
+
+            // Função Auxiliar para quebra de linha no Canvas
+            function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+                var words = text.split(' ');
+                var line = '';
+                for(var n = 0; n < words.length; n++) {
+                    var testLine = line + words[n] + ' ';
+                    var metrics = ctx.measureText(testLine);
+                    if (metrics.width > maxWidth && n > 0) {
+                        ctx.fillText(line, x, y);
+                        line = words[n] + ' ';
+                        y += lineHeight;
+                    } else { line = testLine; }
                 }
-                const titulo = prompt("Título para a Biblioteca KhareisBook:");
-                if (titulo) {
-                    const s_rigor = Number(stats.rigor) || 10;
-                    const s_simb = Number(stats.simbiose) || 10;
-                    db.ref('mural_publico').push({
-                        titulo: titulo, autor: alunoID, data: new Date().toLocaleDateString(),
-                        resumo: mensagens[mensagens.length - 1].texto.substring(0, 180) + "...",
-                        simbiose: s_simb, rigor: s_rigor, timestamp: Date.now()
+                ctx.fillText(line, x, y);
+            }
+
+            // --- 4. FUNÇÃO DE INTEGRAÇÃO (PUBLICAR NA BIBLIOTECA) ---
+            const publicarNaBiblioteca = async () => {
+                const titulo = prompt("Defina um Título para sua Forja (será o nome da Obra):");
+                if (!titulo) return;
+
+                setPublicando(true);
+
+                // Cria o "PDF Virtual" (Texto compilado)
+                const conteudo = mensagens.map(m => `[${m.autor}]: ${m.texto}`).join('\n\n');
+                
+                // Gera a Capa Visualmente
+                const capaBase64 = gerarCapaAutomatica(titulo);
+
+                // Payload compatível com KhareisBook V1 Gold
+                const payloadBiblioteca = {
+                    title: titulo,
+                    author: alunoID,
+                    category: "artigos", // Categoria acadêmica padrão
+                    desc: `Trabalho acadêmico gerado na Forja OESD. Tema: ${titulo}. Contém ${mensagens.length} interações.`,
+                    cover: capaBase64,
+                    
+                    // Lógica de "Artigo de Comunidade"
+                    price: 0, // Custo do plano
+                    salePrice: 0, // Grátis para leitura
+                    plan: "padrao",
+                    origin: "iofw_student", // Marca d'água técnica
+                    
+                    // Link Falso (Já que o texto está na descrição, ou poderia ser um blob, mas vamos simplificar usando a desc como conteudo ou link vazio para contato)
+                    link: "https://khareis159.github.io/iofw/", // Link leva para a faculdade
+                    
+                    status: 'pending', // Vai para moderação do Khareis
+                    createdAt: Date.now()
+                };
+
+                // Envia para o BANCO DO KHAREISBOOK (Pasta SHELF)
+                try {
+                    await fetch(`${DATABASE_URL}shelf.json`, {
+                        method: 'POST',
+                        body: JSON.stringify(payloadBiblioteca)
                     });
-                    alert("Publicado com sucesso na Biblioteca Gold!");
+                    alert("✅ SUCESSO! Sua obra foi enviada para o Acervo KhareisBook e aguarda aprovação do Bibliotecário.");
+                } catch(e) {
+                    alert("Erro ao conectar com a Biblioteca. Tente novamente.");
+                } finally {
+                    setPublicando(false);
                 }
             };
+
+            const limparDados = () => {
+                if(confirm("Reiniciar sua jornada? Isso apaga seu histórico local.")) {
+                    fetch(`${DATABASE_URL}pioneiros/${alunoID}.json`, { method:'DELETE' });
+                    setMensagens([]);
+                    setStats({ rigor: 10, imaginacao: 10, simbiose: 10 });
+                    location.reload();
+                }
+            }
 
             if (!alunoID) {
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-[#010409]">
-                        <div className="border-oesd p-10 rounded-2xl max-w-md w-full text-center">
-                            <h1 className="text-3xl font-bold mb-2 text-[#238636] mono glow-green tracking-tighter uppercase">OESD // Pioneiro</h1>
-                            <input value={nomeInput} onChange={e => setNomeInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && setAlunoID(nomeInput.trim())} className="w-full bg-black border border-[#30363d] p-4 rounded-lg my-6 outline-none focus:border-[#238636] text-center text-white" placeholder="Seu Nome ou Pseudônimo"/>
-                            <button onClick={() => setAlunoID(nomeInput.trim())} className="w-full bg-[#238636] text-white py-4 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-[#2ea043]">Acessar Matriz</button>
+                        <div className="border-oesd p-10 rounded-2xl max-w-md w-full text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-[#238636]"></div>
+                            <h1 className="text-4xl font-bold mb-2 text-white mono tracking-tighter">OESD <span className="text-[#238636]">//</span> LOGIN</h1>
+                            <p className="text-gray-500 text-xs mb-8 font-mono">PROTOCOLO DE ACESSO EDUCACIONAL</p>
+                            
+                            <input value={nomeInput} onChange={e => setNomeInput(e.target.value)} 
+                                className="w-full bg-[#0d1117] border border-[#30363d] p-4 rounded text-center text-white font-mono focus:border-[#238636] outline-none transition-colors" 
+                                placeholder="IDENTIFICAÇÃO (NOME)" />
+                            
+                            <button onClick={() => nomeInput && setAlunoID(nomeInput.trim())} 
+                                className="w-full bg-[#238636] text-white py-4 rounded mt-4 font-bold font-mono hover:bg-[#2ea043] transition-colors shadow-lg shadow-green-900/20">
+                                INICIAR SISTEMA
+                            </button>
+                            
+                            <div className="mt-8 pt-4 border-t border-[#30363d] flex justify-between text-[10px] text-gray-600 font-mono">
+                                <span>V 3.0 STABLE</span>
+                                <span>SYNC: KHAREISBOOK</span>
+                            </div>
                         </div>
                     </div>
                 );
             }
 
             return (
-                <div className="h-screen flex flex-col md:flex-row">
-                    <aside className="w-full md:w-80 bg-[#0d1117] border-r border-[#30363d] p-6 flex flex-col overflow-y-auto chat-scroll">
-                        <div className="mb-8">
-                            <h1 className="text-xl font-bold text-[#238636] mono">HYPERWEB3</h1>
-                            <p className="text-[9px] opacity-40 uppercase tracking-widest">Soberania Epistêmica</p>
+                <div className="h-screen flex flex-col md:flex-row font-sans">
+                    {/* BARRA LATERAL (PAINEL) */}
+                    <aside className="w-full md:w-80 bg-[#0d1117] border-r border-[#30363d] p-6 flex flex-col overflow-y-auto custom-scroll relative">
+                        <div className="mb-8 pb-4 border-b border-[#30363d]">
+                            <h1 className="text-xl font-bold text-white mono tracking-tight">FACULDADE <span className="text-[#238636]">ÍNTEGRA</span></h1>
+                            <p className="text-[10px] text-gray-500 mt-1 font-mono uppercase">Aluno: {alunoID}</p>
                         </div>
 
-                        <div className="space-y-6">
-                            <div><div className="flex justify-between text-[10px] mb-2 font-bold opacity-60 uppercase"><span>Rigor</span><span>{stats.rigor}%</span></div><div className="stats-bar"><div className="stats-fill bg-[#238636]" style={{width: `${stats.rigor}%`}}></div></div></div>
-                            <div><div className="flex justify-between text-[10px] mb-2 font-bold opacity-60 uppercase"><span>Imaginação</span><span>{stats.imaginacao}%</span></div><div className="stats-bar"><div className="stats-fill bg-[#8957e5]" style={{width: `${stats.imaginacao}%`}}></div></div></div>
-                            <div className="pt-6 border-t border-[#30363d] text-center"><span className="text-[10px] opacity-40 block mb-1 uppercase font-bold tracking-widest">Simbiose</span><span className="text-5xl font-bold text-white mono">{stats.simbiose}%</span></div>
-                        </div>
-
-                        <div className="mt-8 space-y-3">
-                            <a href="manual.html" target="_blank" className="block text-center border border-[#23863650] py-3 rounded text-[10px] font-bold text-[#238636] uppercase hover:bg-[#23863610]">📖 Manual Acadêmico</a>
-                            <button onClick={() => { 
-                                const blob = new Blob([mensagens.map(m => `[${m.autor}]: ${m.texto}`).join('\n\n')], {type: 'text/plain'});
-                                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Legado.txt'; a.click();
-                            }} className="w-full border border-[#8957e540] py-3 rounded text-[10px] font-bold text-[#8957e5] uppercase hover:bg-[#8957e510]">📜 Exportar Legado</button>
-  
-<button onClick={publicarBiblioteca} className="w-full border border-[#23863650] py-3 rounded text-[10px] font-bold text-[#238636] uppercase hover:bg-[#23863610] mt-2">
-    🌐 Publicar na Biblioteca
-</button>
-
-<button onClick={limparChat} className="w-full text-[8px] opacity-20 hover:opacity-100 uppercase mt-4 text-red-500 transition-all">
-    🗑️ Limpar Resquícios
-</button>                            
-                       </div>
-
-{/* Painel de Medalhas (Conquistas Dinâmicas) */}
-                        <div className="mt-8 border-t border-[#30363d] pt-6">
-                            <h3 className="text-[10px] font-bold opacity-40 mb-4 uppercase tracking-widest text-[#238636]">Conquistas de Carreira</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {stats.rigor >= 15 && <span className="medal-animate bg-[#23863620] border border-[#23863670] text-[#238636] text-[8px] px-2 py-1 rounded font-bold uppercase tracking-tighter shadow-[0_0_10px_rgba(35,134,54,0.1)]">✓ REALISTA</span>}
-                                {stats.imaginacao >= 15 && <span className="medal-animate bg-[#8957e520] border border-[#8957e570] text-[#8957e5] text-[8px] px-2 py-1 rounded font-bold uppercase tracking-tighter shadow-[0_0_10px_rgba(137,87,229,0.1)]">✓ ESTETA</span>}
-                                {stats.simbiose >= 50 && <span className="medal-animate bg-white text-black text-[8px] px-2 py-1 rounded font-black animate-pulse uppercase">Mestre OESD</span>}
+                        <div className="space-y-6 mb-8">
+                            <div><div className="flex justify-between text-[10px] mb-1 font-bold text-gray-400 uppercase">Rigor Científico</div><div className="stats-bar"><div className="stats-fill bg-[#238636]" style={{width: `${stats.rigor}%`}}></div></div></div>
+                            <div><div className="flex justify-between text-[10px] mb-1 font-bold text-gray-400 uppercase">Imaginação</div><div className="stats-bar"><div className="stats-fill bg-[#8957e5]" style={{width: `${stats.imaginacao}%`}}></div></div></div>
+                            <div className="p-4 bg-[#161b22] rounded border border-[#30363d] text-center">
+                                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-1">Nível de Simbiose</span>
+                                <span className="text-4xl font-bold text-white mono">{stats.simbiose}%</span>
                             </div>
-                        </div>                        
-                        
+                        </div>
 
-                        <footer className="mt-auto pt-8 text-center border-t border-[#30363d]">
-                            <p className="text-[9px] opacity-30 uppercase tracking-widest mono leading-relaxed">© 2025 Carlos Alberto Reis<br/>Propriedade Intelectual Protegida</p>
-                            <button onClick={() => { localStorage.clear(); location.reload(); }} className="mt-4 text-[8px] opacity-20 uppercase hover:opacity-100">Sair: {alunoID}</button>
+                        <div className="space-y-3 flex-1">
+                            <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Ações Acadêmicas</h3>
+                            
+                            <button onClick={publicarBiblioteca} className="w-full py-3 px-4 bg-[#1f6feb] text-white rounded border border-[#1f6feb] font-bold text-xs uppercase hover:bg-[#388bfd] transition-all flex items-center justify-center gap-2">
+                                <i className="fas fa-book"></i> Publicar na Biblioteca
+                            </button>
+                            
+                            <button onClick={() => { 
+                                const blob = new Blob([mensagens.map(m => `[${m.autor.toUpperCase()}]: ${m.texto}`).join('\n\n')], {type: 'text/plain'});
+                                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `OESD_Log_${alunoID}.txt`; a.click();
+                            }} className="w-full py-3 px-4 bg-transparent text-gray-400 border border-[#30363d] rounded font-bold text-xs uppercase hover:border-gray-500 transition-all">
+                                <i className="fas fa-download"></i> Baixar Histórico
+                            </button>
+
+                            <button onClick={limparDados} className="w-full py-2 text-[10px] text-red-900 hover:text-red-500 transition-colors uppercase">
+                                Resetar Progresso
+                            </button>
+                        </div>
+
+                        <footer className="mt-8 pt-4 border-t border-[#30363d] text-center">
+                            <p className="text-[9px] text-gray-600 font-mono mb-2">© 2026 Carlos Alberto Reis</p>
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#21262d] rounded-full text-[10px] text-[#238636]">
+                                <i className="fas fa-users"></i> {visits.toLocaleString('pt-BR')} Logados
+                            </div>
                         </footer>
                     </aside>
 
-                    <main className="flex-1 flex flex-col bg-[#010409]">
-                        <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-6 chat-scroll bg-grid">
+                    {/* ÁREA PRINCIPAL (CHAT) */}
+                    <main className="flex-1 flex flex-col bg-[#010409] relative">
+                        <div ref={chatRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 chat-scroll bg-grid">
                             {mensagens.map((m, i) => (
                                 <div key={i} className={`flex ${m.autor === 'Tutor' || m.autor === 'SISTEMA' ? 'justify-start' : 'justify-end'}`}>
-                                    <div className={`max-w-[85%] p-4 rounded-xl text-sm leading-relaxed border ${m.autor === 'Tutor' ? 'bg-[#0d1117] border-[#30363d] text-[#c9d1d9]' : m.autor === 'SISTEMA' ? 'bg-red-900/10 border-red-500/50 text-red-500 font-bold' : 'bg-[#23863610] border-[#23863640] text-white'}`}>
-                                        <span className={`text-[8px] font-bold block mb-2 uppercase tracking-widest mono ${m.autor === 'Tutor' ? 'text-[#8957e5]' : m.autor === 'SISTEMA' ? 'text-red-500' : 'text-[#238636]'}`}>{m.autor}</span>
-                                        <div className="whitespace-pre-wrap">{m.texto}</div>
+                                    <div className={`max-w-[85%] p-4 rounded-lg text-sm leading-7 shadow-xl border ${
+                                        m.autor === 'Tutor' 
+                                        ? 'bg-[#161b22] border-[#30363d] text-gray-300' 
+                                        : 'bg-[#23863615] border-[#23863640] text-emerald-50'
+                                    }`}>
+                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/5">
+                                            <span className={`text-[10px] font-black uppercase tracking-wider ${m.autor==='Tutor'?'text-[#8957e5]':'text-[#238636]'}`}>
+                                                {m.autor === 'Tutor' ? '🤖 TUTOR OESD' : `👤 ${m.autor.toUpperCase()}`}
+                                            </span>
+                                            <span className="text-[9px] text-gray-600 font-mono">{new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                        </div>
+                                        <div className="whitespace-pre-wrap font-sans">{m.texto}</div>
                                     </div>
                                 </div>
                             ))}
-                            {carregando && <div className="text-[10px] animate-pulse text-[#238636] text-center mono uppercase tracking-widest">Sincronizando com a Matriz...</div>}
+                            {carregando && (
+                                <div className="flex justify-start animate-pulse">
+                                    <div className="bg-[#161b22] p-4 rounded-lg border border-[#30363d] text-xs text-[#238636] font-mono">
+                                        ▶ Processando resposta via Llama 3.1...
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="p-6 bg-[#0d1117] border-t border-[#30363d]">
-                            <div className="max-w-4xl mx-auto flex gap-4">
-                                <input value={input} onChange={e => setInput(e.target.value)} onKeyPress={e => e.key === 'Enter' && enviar()} className="flex-1 bg-black border border-[#30363d] p-4 rounded-xl outline-none focus:border-[#238636] text-sm text-emerald-50" placeholder="Questione, proponha ou co-crie..."/>
-                                <button onClick={enviar} disabled={carregando} className="bg-[#238636] text-white px-8 rounded-xl font-bold uppercase text-[10px] tracking-widest disabled:opacity-30">Forjar</button>
+                        {/* INPUT */}
+                        <div className="p-4 md:p-6 bg-[#0d1117] border-t border-[#30363d]">
+                            <div className="max-w-4xl mx-auto relative">
+                                <input 
+                                    value={input} 
+                                    onChange={e => setInput(e.target.value)} 
+                                    onKeyPress={e => e.key === 'Enter' && enviar()}
+                                    className="w-full bg-[#010409] text-white border border-[#30363d] rounded-lg pl-4 pr-32 py-4 outline-none focus:border-[#238636] focus:ring-1 focus:ring-[#238636] transition-all font-sans text-sm shadow-inner"
+                                    placeholder="Digite sua dúvida ou hipótese..."
+                                    disabled={carregando}
+                                />
+                                <button 
+                                    onClick={enviar} 
+                                    disabled={carregando || !input}
+                                    className="absolute right-2 top-2 bottom-2 px-6 bg-[#238636] text-white font-bold rounded text-xs hover:bg-[#2ea043] disabled:opacity-50 disabled:cursor-not-allowed transition-all uppercase tracking-widest"
+                                >
+                                    Enviar
+                                </button>
                             </div>
                         </div>
+                        
+                        {publicando && (
+                            <div className="publish-overlay">
+                                <div className="spinner mb-4 border-4 border-t-[#238636] w-12 h-12 rounded-full animate-spin"></div>
+                                <div className="text-[#238636] font-mono text-sm tracking-widest bg-black px-4 py-2 border border-[#238636]">ENVIANDO PARA A BIBLIOTECA...</div>
+                            </div>
+                        )}
                     </main>
                 </div>
             );
