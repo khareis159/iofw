@@ -260,10 +260,12 @@
                         </div>
 
                         {/* MENU AÇÕES */}
+
                         <div className="mt-auto space-y-2">
                             <a href="https://khareis159.github.io/khareisbook/" target="_blank" className="block w-full py-3 bg-transparent text-[#d4af37] border border-[#d4af37] rounded font-bold text-xs uppercase hover:bg-[#d4af3710] text-center mb-2 no-underline">
                                 <i className="fas fa-external-link-alt mr-2"></i> Visitar Biblioteca
                             </a>
+
 
 {/* --- BOTÃO DE EXPORTAR LEGADO (RECUPERADO) --- */}
                             <button onClick={() => { 
@@ -274,20 +276,33 @@
                             </button>
 
 
+
+
                             <button onClick={publicarNaBiblioteca} className="w-full py-3 bg-[#1f6feb] text-white rounded font-bold text-xs uppercase hover:bg-[#388bfd]">Publicar Trabalho</button>
                             <button onClick={() => { localStorage.clear(); location.reload(); }} className="w-full py-2 text-xs text-red-500 uppercase">Sair / Reset</button>
+
+
                             <div className="text-center pt-4 text-[10px] text-[#238636]"><i className="fas fa-users"></i> {visits.toLocaleString('pt-BR')} Online</div>
                         </div>
                     </aside>
 
+
                     <main className="flex-1 flex flex-col bg-[#010409] relative">
 
 
-{/* --- BARRA DE STATUS SUPERIOR (RECUPERADA) --- */}
-                        <div className="bg-[#0d1117] border-b border-[#30363d] p-3 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-gray-500">
+<main className="flex-1 flex flex-col bg-[#010409] relative">
+                        
+                        {/* --- COLAR AQUI --- */}
+                        <div className="bg-[#0d1117] border-b border-[#30363d] p-3 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-gray-500 sticky top-0 z-10">
                             <span>MATRIZ OESD ATIVA</span>
-                            <span className="text-[#238636]">PIONEIRO LOGADO: <strong className="text-white">{alunoID}</strong></span>
+                            <span className="text-[#238636]">PIONEIRO: <strong className="text-white">{alunoID}</strong></span>
                         </div>
+                        {/* --- FIM DA COLAGEM --- */}
+
+                        <div ref={chatRef}...
+
+
+
 
 
                         <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll bg-grid">
@@ -317,4 +332,3 @@
 </body>
 </html>
 ```[[1](https://www.google.com/url?sa=E&q=https%3A%2F%2Fvertexaisearch.cloud.google.com%2Fgrounding-api-redirect%2FAUZIYQHKYufxDirE9MeUcZ7zF-wfCCLtacCK1AAtT8KRMMido1cmDjYDxhce9PfZnGerbWKmxke-4MjF1hZFBLLl4HQvBipiSqy0dziFkgmXR6D7ZHw3ejF94wrKqmRcMVS-3nGFgawCAXbpmLHwAWryrVPkmjOUTNGK6CkFzPy2sOkA8gneDcWD_6jJYFhbjYai9IJ6Z8w5)]
-
