@@ -240,7 +240,8 @@
                     author: alunoID,
                     category: "artigos", // Categoria acadêmica padrão
                     desc: `Trabalho acadêmico gerado na Forja OESD. Tema: ${titulo}. Contém ${mensagens.length} interações.`,
-                    cover: capaBase64,
+                   // Se o canvas falhar (string vazia), usa placeholder dark
+cover: (capaBase64 && capaBase64.length > 100) ? capaBase64 : 'https://placehold.co/400x600/000000/FFFFFF/png?text=Forja+OESD',
                     
                     // Lógica de "Artigo de Comunidade"
                     price: 0, // Custo do plano
