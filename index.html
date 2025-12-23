@@ -266,7 +266,6 @@
                                 <i className="fas fa-external-link-alt mr-2"></i> Visitar Biblioteca
                             </a>
 
-
 {/* --- BOTÃO DE EXPORTAR LEGADO (RECUPERADO) --- */}
                             <button onClick={() => { 
                                 const blob = new Blob([mensagens.map(m => `[${m.autor.toUpperCase()}]: ${m.texto}`).join('\n\n')], {type: 'text/plain'});
@@ -275,9 +274,6 @@
                                 <i className="fas fa-file-download"></i> Baixar Histórico
                             </button>
 
-
-
-
                             <button onClick={publicarNaBiblioteca} className="w-full py-3 bg-[#1f6feb] text-white rounded font-bold text-xs uppercase hover:bg-[#388bfd]">Publicar Trabalho</button>
                             <button onClick={() => { localStorage.clear(); location.reload(); }} className="w-full py-2 text-xs text-red-500 uppercase">Sair / Reset</button>
 
@@ -285,26 +281,16 @@
                             <div className="text-center pt-4 text-[10px] text-[#238636]"><i className="fas fa-users"></i> {visits.toLocaleString('pt-BR')} Online</div>
                         </div>
                     </aside>
-
-
+{/* INICIO DA ÁREA PRINCIPAL CORRIGIDA */}
                     <main className="flex-1 flex flex-col bg-[#010409] relative">
-
-
-<main className="flex-1 flex flex-col bg-[#010409] relative">
                         
-                        {/* --- COLAR AQUI --- */}
+                        {/* 1. BARRA DE STATUS (No topo, fixa) */}
                         <div className="bg-[#0d1117] border-b border-[#30363d] p-3 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-gray-500 sticky top-0 z-10">
                             <span>MATRIZ OESD ATIVA</span>
                             <span className="text-[#238636]">PIONEIRO: <strong className="text-white">{alunoID}</strong></span>
                         </div>
-                        {/* --- FIM DA COLAGEM --- */}
 
-                        <div ref={chatRef}...
-
-
-
-
-
+                        {/* 2. ÁREA DE CHAT (Rolagem) */}
                         <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll bg-grid">
                             {mensagens.map((m, i) => (
                                 <div key={i} className={`flex ${m.autor==='Tutor'?'justify-start':'justify-end'}`}>
@@ -316,10 +302,14 @@
                             ))}
                             {carregando && <div className="text-center text-xs animate-pulse text-[#238636]">...</div>}
                         </div>
+
+                        {/* 3. ÁREA DE DIGITAÇÃO */}
                         <div className="p-4 border-t border-[#30363d] bg-[#0d1117] flex gap-2">
                             <input value={input} onChange={e=>setInput(e.target.value)} onKeyPress={e=>e.key==='Enter'&&enviar()} className="flex-1 bg-[#010409] border border-[#30363d] rounded p-3 text-white outline-none focus:border-[#238636]" placeholder="Comando..." disabled={carregando} />
                             <button onClick={enviar} disabled={carregando||!input} className="px-6 bg-[#238636] text-white rounded font-bold hover:bg-[#2ea043] disabled:opacity-50">SEND</button>
                         </div>
+
+                        {/* 4. OVERLAY DE PUBLICAÇÃO */}
                         {publicando && <div className="publish-overlay"><div className="text-[#238636] font-mono font-bold bg-black px-4 py-2 border border-[#238636]">ENVIANDO...</div></div>}
                     </main>
                 </div>
