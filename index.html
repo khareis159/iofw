@@ -1005,80 +1005,62 @@
             // === HANDLER: Enviar Mensagem ===
             // ============================================
             
-            const handleSend = useCallback(async (text) => {
-                if (!text || loading) return;
-                
-                setLoading(true);
-                
-                // Mensagem do usuário
-                const userMsg = {
-                    autor: alunoID,
-                    texto: text,
-                    timestamp: Date.now()
-                };
-                
-                setMessages(prev => [...prev, userMsg]);
-                
-                // Salva mensagem do usuário
-                try {
-                    await FirebaseService.saveMessage(alunoID, userMsg);
-                } catch (err) {
-                    console.error('Erro ao salvar mensagem do usuário:', err);
-                }
-                
-                try {
-                    // Chama IA com timeout
-                    const timeoutPromise = new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Timeout')), 30000)
-                    );
-                    
-                    const responsePromise = TutorService.ask(text, messages);
-                    const resposta = await Promise.race([responsePromise, timeoutPromise]);
-                    
-                    // Mensagem do tutor
-                    const tutorMsg = {
-                        autor: 'Tutor',
-                        texto: resposta,
-                        timestamp: Date.now()
-                    };
-                    
-                    setMessages(prev => [...prev, tutorMsg]);
-                    await FirebaseService.saveMessage(alunoID, tutorMsg);
-                    
-                    // Atualiza stats
-                    setStats(prevStats => {
-                        const newStats = {
-                            rigor: Math.min(prevStats.rigor + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
-                            imaginacao: Math.min(prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
-                            simbiose: Math.min(
-                                Math.round(
-                                    (prevStats.rigor + prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT * 2) / 2
-                                ),
-                                CONFIG.LIMITES.STAT_MAX
-                            )
-                        };
-                        
-                        FirebaseService.saveStats(alunoID, newStats);
-                        return newStats;
-                    });
-                    
-                } catch (error) {
-                    console.error('Erro ao enviar mensagem:', error);
-                    
-                    const errorMsg = {
-                        autor: 'Sistema',
-                        texto: '⚠️ Erro ao processar resposta do Tutor. Por favor, tente novamente.\n\n' + 
-                               (error.message === 'Timeout' 
-                                   ? 'A requisição demorou muito tempo.' 
-                                   : 'Verifique sua conexão com a internet.'),
-                        timestamp: Date.now()
-                    };
-                    
-                    setMessages(prev => [...prev, errorMsg]);
-                } finally {
-                    setLoading(false);
-                }
-            }, [alunoID, loading, messages]);
+   const handleSend = useCallback(async (text) => {
+    if (!text || loading) return;
+    
+    setLoading(true);
+    
+    const userMsg = {
+        autor: alunoID,
+        texto: text,
+        timestamp: Date.now()
+    };
+    
+    setMessages(prev => [...prev, userMsg]);
+    
+    try {
+        await FirebaseService.saveMessage(alunoID, userMsg);
+        
+        // Chama IA (removi timeout que estava causando problema)
+        const resposta = await TutorService.ask(text, messages);
+        
+        const tutorMsg = {
+            autor: 'Tutor',
+            texto: resposta,
+            timestamp: Date.now()
+        };
+        
+        setMessages(prev => [...prev, tutorMsg]);
+        await FirebaseService.saveMessage(alunoID, tutorMsg);
+        
+        // Atualiza stats
+        setStats(prevStats => {
+            const newStats = {
+                rigor: Math.min(prevStats.rigor + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
+                imaginacao: Math.min(prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
+                simbiose: Math.min(
+                    Math.round((prevStats.rigor + prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT * 2) / 2),
+                    CONFIG.LIMITES.STAT_MAX
+                )
+            };
+            FirebaseService.saveStats(alunoID, newStats).catch(console.error);
+            return newStats;
+        });
+        
+    } catch (error) {
+        console.error('Erro completo:', error);
+        setMessages(prev => [...prev, {
+            autor: 'Sistema',
+            texto: '⚠️ Falha na comunicação com o Tutor. Verifique: 1) Conexão com internet 2) Chave da API Groq está válida',
+            timestamp: Date.now()
+        }]);
+    } finally {
+        setLoading(false);
+    }
+}, [alunoID, loading, messages]);        
+
+
+
             
             // ============================================
             // === HANDLER: Exportar Histórico ===
