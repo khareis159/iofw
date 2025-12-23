@@ -341,9 +341,10 @@
         // === CONFIGURAÇÃO E CONSTANTES ===
         // ============================================
         
-        const CONFIG = {
+const CONFIG = {
             DATABASE_URL: "https://khareisbook-default-rtdb.firebaseio.com/",
-            GROQ_API_KEY: "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",
+            // Cole aqui o código que você gerou no site Base64
+            OESD_MASK: "Z3NrX0hIRTJXR25pOFpqTllLRDFPM0JKV0dkeWIzRlkwajhpQW5BWlIxcVZpa0VQdkdKb1FZMUU=", 
             BIBLIOTECA_URL: "https://khareis159.github.io/khareisbook/",
             LIMITES: {
                 STAT_MAX: 100,
@@ -356,6 +357,8 @@
                 MESTRE_OESD: { threshold: 50, label: "Mestre OESD", icon: "⚡", color: "mestre" }
             }
         };
+      
+
 
         // ============================================
         // === UTILITÁRIOS ===
@@ -546,57 +549,37 @@
         // ============================================
         
         const TutorService = {
-            async ask(userMessage, history = []) {
+          async ask(userMessage, history = []) {
                 try {
-                    const systemPrompt = {
-                        role: "system",
-                        content: "Você é o Tutor OESD da Faculdade Íntegra. Responda de forma breve, acadêmica e construtiva. Incentive o pensamento crítico e a curiosidade epistêmica."
-                    };
-                    
-                    // Pega apenas últimas 4 mensagens para evitar token limit
-                    const recentHistory = history.slice(-4).map(m => ({
-                        role: m.autor === 'Tutor' ? 'assistant' : 'user',
-                        content: m.texto
-                    }));
-                    
-                    const messages = [
-                        systemPrompt,
-                        ...recentHistory,
-                        { role: "user", content: userMessage }
-                    ];
-                    
+                    // O sistema decodifica a chave apenas na memória do usuário
+                    const chaveInvisivel = atob(CONFIG.OESD_MASK);
+
                     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                         method: "POST",
                         headers: {
-                            "Authorization": `Bearer ${CONFIG.GROQ_API_KEY.trim()}`,
+                            "Authorization": `Bearer ${chaveInvisivel.trim()}`,
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
-                            model: "llama-3.1-8b-instant",
-                            messages: messages,
-                            temperature: 0.7,
-                            max_tokens: 600
+                            model: "llama-3.3-70b-versatile",
+                            messages: [
+                                { role: "system", content: "Você é o Reitor Simbiótico da OESD. Use o lema Mens et Machina Unum Sunt." },
+                                { role: "user", content: userMessage }
+                            ]
                         })
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`Erro na API: ${response.status}`);
+                        throw new Error(`Acesso negado à Matriz (Status: ${response.status})`);
                     }
                     
                     const data = await response.json();
-                    
-                    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                        throw new Error("Resposta inválida da API");
-                    }
-                    
                     return data.choices[0].message.content;
-                    
                 } catch (error) {
-                    console.error("Erro no TutorService:", error);
                     throw error;
                 }
-            }
-        };
+            } 
+        };  
 
         // ============================================
         // === LÓGICA DE MEDALHAS ===
@@ -1006,62 +989,64 @@
             // ============================================
             
    const handleSend = useCallback(async (text) => {
-    if (!text || loading) return;
-    
-    setLoading(true);
-    
-    const userMsg = {
-        autor: alunoID,
-        texto: text,
-        timestamp: Date.now()
-    };
-    
-    setMessages(prev => [...prev, userMsg]);
-    
-    try {
-        await FirebaseService.saveMessage(alunoID, userMsg);
-        
-        // Chama IA (removi timeout que estava causando problema)
-        const resposta = await TutorService.ask(text, messages);
-        
-        const tutorMsg = {
-            autor: 'Tutor',
-            texto: resposta,
-            timestamp: Date.now()
-        };
-        
-        setMessages(prev => [...prev, tutorMsg]);
-        await FirebaseService.saveMessage(alunoID, tutorMsg);
-        
-        // Atualiza stats
-        setStats(prevStats => {
-            const newStats = {
-                rigor: Math.min(prevStats.rigor + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
-                imaginacao: Math.min(prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
-                simbiose: Math.min(
-                    Math.round((prevStats.rigor + prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT * 2) / 2),
-                    CONFIG.LIMITES.STAT_MAX
-                )
-            };
-            FirebaseService.saveStats(alunoID, newStats).catch(console.error);
-            return newStats;
-        });
-        
-    } catch (error) {
-        console.error('Erro completo:', error);
-        setMessages(prev => [...prev, {
-            autor: 'Sistema',
-            texto: '⚠️ Falha na comunicação com o Tutor. Verifique: 1) Conexão com internet 2) Chave da API Groq está válida',
-            timestamp: Date.now()
-        }]);
-    } finally {
-        setLoading(false);
-    }
-}, [alunoID, loading, messages]);        
+                if (!text || loading) return;
+                setLoading(true);
 
+                const userMsg = {
+                    autor: alunoID,
+                    texto: text,
+                    timestamp: Date.now()
+                };
 
+                // Mostra sua mensagem na tela imediatamente
+                setMessages(prev => [...prev, userMsg]);
 
-            
+                try {
+                    // 1. Tenta salvar sua pergunta no Firebase
+                    // Se falhar aqui, o erro é na URL do Firebase ou nas Regras (Rules)
+                    await FirebaseService.saveMessage(alunoID, userMsg);
+
+                    // 2. Tenta falar com a IA (Tutor)
+                    const resposta = await TutorService.ask(text, messages);
+
+                    const tutorMsg = {
+                        autor: 'Tutor',
+                        texto: resposta,
+                        timestamp: Date.now()
+                    };
+
+                    // 3. Mostra a resposta da IA e salva no Firebase
+                    setMessages(prev => [...prev, tutorMsg]);
+                    await FirebaseService.saveMessage(alunoID, tutorMsg);
+
+                    // 4. Atualiza seus pontos de Simbiose
+                    setStats(prevStats => {
+                        const newStats = {
+                            rigor: Math.min(prevStats.rigor + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
+                            imaginacao: Math.min(prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT, CONFIG.LIMITES.STAT_MAX),
+                            simbiose: Math.min(
+                                Math.round((prevStats.rigor + prevStats.imaginacao + CONFIG.LIMITES.STAT_INCREMENT * 2) / 2),
+                                CONFIG.LIMITES.STAT_MAX
+                            )
+                        };
+                        FirebaseService.saveStats(alunoID, newStats).catch(console.error);
+                        return newStats;
+                    });
+
+                } catch (error) {
+                    // SE DER ERRO (CHAVE EXPIRADA OU FALHA DE REDE), O SISTEMA AVISA AQUI:
+                    console.error('Erro Crítico:', error);
+                    setMessages(prev => [...prev, {
+                        autor: 'SISTEMA',
+                        texto: `❌ FALHA DE CONEXÃO: ${error.message}. 
+                               Verifique se sua Chave API na linha 257 é válida ou se o Firebase está correto.`,
+                        timestamp: Date.now()
+                    }]);
+                } finally {
+                    setLoading(false);
+                }
+            }, [alunoID, loading, messages]);
+           
             // ============================================
             // === HANDLER: Exportar Histórico ===
             // ============================================
