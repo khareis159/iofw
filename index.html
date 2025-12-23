@@ -547,36 +547,54 @@
         
         const TutorService = {
             async ask(userMessage, history = []) {
-                const systemPrompt = {
-                    role: "system",
-                    content: "Você é o Tutor OESD da Faculdade Íntegra. Responda de forma breve, acadêmica e construtiva. Incentive o pensamento crítico e a curiosidade epistêmica."
-                };
-                
-                const messages = [
-                    systemPrompt,
-                    ...history.slice(-6).map(m => ({
+                try {
+                    const systemPrompt = {
+                        role: "system",
+                        content: "Você é o Tutor OESD da Faculdade Íntegra. Responda de forma breve, acadêmica e construtiva. Incentive o pensamento crítico e a curiosidade epistêmica."
+                    };
+                    
+                    // Pega apenas últimas 4 mensagens para evitar token limit
+                    const recentHistory = history.slice(-4).map(m => ({
                         role: m.autor === 'Tutor' ? 'assistant' : 'user',
                         content: m.texto
-                    })),
-                    { role: "user", content: userMessage }
-                ];
-                
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${CONFIG.GROQ_API_KEY.trim()}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.1-8b-instant",
-                        messages: messages,
-                        temperature: 0.7,
-                        max_tokens: 800
-                    })
-                });
-                
-                const data = await response.json();
-                return data.choices[0].message.content;
+                    }));
+                    
+                    const messages = [
+                        systemPrompt,
+                        ...recentHistory,
+                        { role: "user", content: userMessage }
+                    ];
+                    
+                    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${CONFIG.GROQ_API_KEY.trim()}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: "llama-3.1-8b-instant",
+                            messages: messages,
+                            temperature: 0.7,
+                            max_tokens: 600
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro na API: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                        throw new Error("Resposta inválida da API");
+                    }
+                    
+                    return data.choices[0].message.content;
+                    
+                } catch (error) {
+                    console.error("Erro no TutorService:", error);
+                    throw error;
+                }
             }
         };
 
@@ -1000,11 +1018,22 @@
                 };
                 
                 setMessages(prev => [...prev, userMsg]);
-                FirebaseService.saveMessage(alunoID, userMsg);
+                
+                // Salva mensagem do usuário
+                try {
+                    await FirebaseService.saveMessage(alunoID, userMsg);
+                } catch (err) {
+                    console.error('Erro ao salvar mensagem do usuário:', err);
+                }
                 
                 try {
-                    // Chama IA
-                    const resposta = await TutorService.ask(text, messages);
+                    // Chama IA com timeout
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 30000)
+                    );
+                    
+                    const responsePromise = TutorService.ask(text, messages);
+                    const resposta = await Promise.race([responsePromise, timeoutPromise]);
                     
                     // Mensagem do tutor
                     const tutorMsg = {
@@ -1014,7 +1043,7 @@
                     };
                     
                     setMessages(prev => [...prev, tutorMsg]);
-                    FirebaseService.saveMessage(alunoID, tutorMsg);
+                    await FirebaseService.saveMessage(alunoID, tutorMsg);
                     
                     // Atualiza stats
                     setStats(prevStats => {
@@ -1035,11 +1064,17 @@
                     
                 } catch (error) {
                     console.error('Erro ao enviar mensagem:', error);
-                    setMessages(prev => [...prev, {
+                    
+                    const errorMsg = {
                         autor: 'Sistema',
-                        texto: '⚠️ Erro ao processar resposta. Tente novamente.',
+                        texto: '⚠️ Erro ao processar resposta do Tutor. Por favor, tente novamente.\n\n' + 
+                               (error.message === 'Timeout' 
+                                   ? 'A requisição demorou muito tempo.' 
+                                   : 'Verifique sua conexão com a internet.'),
                         timestamp: Date.now()
-                    }]);
+                    };
+                    
+                    setMessages(prev => [...prev, errorMsg]);
                 } finally {
                     setLoading(false);
                 }
@@ -1050,18 +1085,203 @@
             // ============================================
             
             const handleExport = useCallback(() => {
-                const content = messages
-                    .map(m => `[${m.autor.toUpperCase()}] ${Utils.formatTimestamp(m.timestamp)}\n${m.texto}\n`)
-                    .join('\n---\n\n');
+                // Gera HTML formatado profissionalmente
+                const htmlContent = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legado Epistêmico - ${alunoID}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #f5f5f0;
+            color: #333;
+            line-height: 1.8;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #238636;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            color: #238636;
+            margin-bottom: 10px;
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            font-style: italic;
+        }
+        .metadata {
+            background: #f9f9f9;
+            padding: 20px;
+            border-left: 4px solid #238636;
+            margin-bottom: 40px;
+        }
+        .metadata p {
+            margin: 5px 0;
+            font-size: 0.95em;
+            color: #555;
+        }
+        .metadata strong {
+            color: #238636;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .stat-badge {
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(35,134,54,0.2);
+        }
+        .stat-badge .label {
+            font-size: 0.8em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat-badge .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        .message {
+            margin: 30px 0;
+            padding: 25px;
+            border-radius: 8px;
+            page-break-inside: avoid;
+        }
+        .message.user {
+            background: #e8f5e9;
+            border-left: 5px solid #238636;
+        }
+        .message.tutor {
+            background: #f3e5f5;
+            border-left: 5px solid #8957e5;
+        }
+        .message .author {
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            color: #238636;
+        }
+        .message.tutor .author {
+            color: #8957e5;
+        }
+        .message .timestamp {
+            font-size: 0.75em;
+            color: #999;
+            margin-left: 10px;
+        }
+        .message .content {
+            font-size: 1.05em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+        }
+        .footer strong {
+            color: #238636;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LEGADO EPISTÊMICO</h1>
+            <div class="subtitle">Registro Acadêmico da Jornada OESD</div>
+        </div>
+        
+        <div class="metadata">
+            <p><strong>Pioneiro:</strong> ${alunoID}</p>
+            <p><strong>Data de Exportação:</strong> ${new Date().toLocaleDateString('pt-BR', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}</p>
+            <p><strong>Total de Interações:</strong> ${messages.length} mensagens</p>
+            <p><strong>Sistema:</strong> IOFW v3.2 - Faculdade Íntegra</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-badge">
+                <div class="label">Rigor</div>
+                <div class="value">${stats.rigor}%</div>
+            </div>
+            <div class="stat-badge" style="background: linear-gradient(135deg, #8957e5, #a78bfa);">
+                <div class="label">Imaginação</div>
+                <div class="value">${stats.imaginacao}%</div>
+            </div>
+            <div class="stat-badge" style="background: linear-gradient(135deg, #d4af37, #f0c75e);">
+                <div class="label">Simbiose</div>
+                <div class="value">${stats.simbiose}%</div>
+            </div>
+        </div>
+        
+        <hr style="margin: 40px 0; border: none; border-top: 2px solid #eee;">
+        
+        ${messages.map((m, i) => `
+            <div class="message ${m.autor === 'Tutor' ? 'tutor' : 'user'}">
+                <div class="author">
+                    ${m.autor === 'Tutor' ? '🎓 Tutor OESD' : '👤 ' + m.autor}
+                    ${m.timestamp ? `<span class="timestamp">${Utils.formatTimestamp(m.timestamp)}</span>` : ''}
+                </div>
+                <div class="content">${m.texto}</div>
+            </div>
+        `).join('')}
+        
+        <div class="footer">
+            <p>Documento gerado pelo <strong>Sistema IOFW v3.2</strong></p>
+            <p>Faculdade Íntegra • Sistema OESD de Tutoria Epistêmica</p>
+            <p style="margin-top: 10px; font-size: 0.8em;">
+                © 2026 Carlos Alberto Reis • Todos os direitos reservados
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
                 
-                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Legado_Epistemico_${alunoID}_${Date.now()}.txt`;
+                a.download = `Legado_Epistemico_${alunoID}_${Date.now()}.html`;
                 a.click();
                 URL.revokeObjectURL(url);
-            }, [messages, alunoID]);
+            }, [messages, alunoID, stats]);
             
             // ============================================
             // === HANDLER: Publicar na Biblioteca ===
