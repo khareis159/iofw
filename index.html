@@ -343,7 +343,7 @@
         
 const CONFIG = {
             DATABASE_URL: "https://khareisbook-default-rtdb.firebaseio.com/",
-            OESD_MASK: "Z3NrX2lwSjFzcUtJSk5YRVJPeFVtR1dWV0dkeWIzRllBYUc3U2RMdjVncXJZczA2MlU0ZlRXR1U=", 
+            OESD_MASK: "Z3NrX3dJR3FPN04wQVNxbXFyWlBLZTFpV0dkeWIzRllIUG9ndmh6N0ZhWndrbnZzODlvenJYelM=", 
             BIBLIOTECA_URL: "https://khareis159.github.io/khareisbook/",
             LIMITES: { STAT_MAX: 100, STAT_INCREMENT: 2, STAT_MIN: 10 },
             MEDALHAS: {
@@ -542,38 +542,39 @@ const CONFIG = {
         // === SERVIÇO DE TUTORIA (GROQ) ===
         // ============================================
         
-     const TutorService = {
+   const TutorService = {
           async ask(userMessage, history = []) {
                 try {
-                    // Proteção contra máscara mal formatada
-                    let chaveInvisivel;
-                    try {
-                        chaveInvisivel = atob(CONFIG.OESD_MASK.trim());
-                    } catch (e) {
-                        throw new Error("A máscara OESD_MASK na linha 257 está mal formatada ou contém espaços.");
-                    }
+                    // 1. Decodifica e limpa qualquer espaço invisível
+                    const rawMask = CONFIG.OESD_MASK.replace(/\s/g, ''); 
+                    const chaveReal = atob(rawMask).trim();
 
                     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                         method: "POST",
                         headers: {
-                            "Authorization": `Bearer ${chaveInvisivel}`,
+                            "Authorization": `Bearer ${chaveReal}`,
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
                             model: "llama-3.3-70b-versatile",
                             messages: [
-                                { role: "system", content: "Você é o Reitor Simbiótico da OESD." },
+                                { role: "system", content: "Você é o Reitor Simbiótico da OESD. Use o lema Mens et Machina Unum Sunt." },
                                 { role: "user", content: userMessage }
                             ]
                         })
                     });
                     
                     const data = await response.json();
+
                     if (!response.ok) {
-                        throw new Error(data.error?.message || `Erro ${response.status}`);
+                        // Se der erro 401 aqui, a chave foi cancelada pela Groq
+                        const msgErro = data.error?.message || `Erro ${response.status}`;
+                        throw new Error(`Groq diz: ${msgErro}`);
                     }
+                    
                     return data.choices[0].message.content;
                 } catch (error) {
+                    console.error("ERRO DETALHADO IA:", error);
                     throw error;
                 }
             } 
