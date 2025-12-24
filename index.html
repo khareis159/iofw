@@ -1024,8 +1024,8 @@ const CONFIG = {
             // === HANDLER: Exportar Histórico ===
             // ============================================
             
-            const handleExport = useCallback(() => {
-                // Gera HTML formatado profissionalmente
+ const handleExport = useCallback(() => {
+                // Conteúdo HTML formatado com RIGOR e ALTO CONTRASTE
                 const htmlContent = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1035,180 +1035,86 @@ const CONFIG = {
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: #f5f5f0;
-            color: #333;
-            line-height: 1.8;
+            font-family: 'Georgia', serif;
+            background: #ffffff; /* Fundo Branco Puro para Contraste */
+            color: #1a1a1a; /* Texto quase preto para leitura */
+            line-height: 1.6;
             padding: 40px 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            background: white;
-            padding: 60px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            border: 2px solid #238636;
+            padding: 50px;
+            background: #fff;
         }
         .header {
             text-align: center;
-            border-bottom: 3px solid #238636;
-            padding-bottom: 30px;
-            margin-bottom: 40px;
+            border-bottom: 2px solid #238636;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
         }
-        .header h1 {
-            font-size: 2.5em;
-            color: #238636;
-            margin-bottom: 10px;
-            font-weight: normal;
-            letter-spacing: 2px;
-        }
-        .header .subtitle {
-            color: #666;
-            font-size: 1.1em;
-            font-style: italic;
-        }
-        .metadata {
-            background: #f9f9f9;
-            padding: 20px;
-            border-left: 4px solid #238636;
-            margin-bottom: 40px;
-        }
-        .metadata p {
-            margin: 5px 0;
-            font-size: 0.95em;
-            color: #555;
-        }
-        .metadata strong {
-            color: #238636;
-        }
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin: 20px 0;
-            justify-content: center;
-        }
+        .header h1 { color: #238636; font-size: 2.2em; text-transform: uppercase; }
+        .metadata { font-size: 0.9em; margin-bottom: 30px; color: #444; background: #f9f9f9; padding: 15px; border-left: 5px solid #238636; }
+        .stats { display: flex; gap: 15px; justify-content: center; margin: 20px 0; }
         .stat-badge {
-            background: linear-gradient(135deg, #238636, #2ea043);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(35,134,54,0.2);
+            padding: 10px 20px; border-radius: 5px; text-align: center; min-width: 120px;
+            color: white; font-weight: bold;
         }
-        .stat-badge .label {
-            font-size: 0.8em;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .stat-badge .value {
-            font-size: 1.8em;
-            font-weight: bold;
-        }
+        /* Estilos de Mensagem com cores Fortes */
         .message {
-            margin: 30px 0;
-            padding: 25px;
-            border-radius: 8px;
-            page-break-inside: avoid;
+            margin: 20px 0; padding: 20px; border-radius: 8px;
+            border: 1px solid #ddd;
         }
-        .message.user {
-            background: #e8f5e9;
-            border-left: 5px solid #238636;
+        .message.user { background: #f1f8e9; border-left: 6px solid #238636; }
+        .message.tutor { background: #f3e5f5; border-left: 6px solid #8957e5; }
+        
+        .author-label {
+            font-weight: bold; font-size: 0.85em; margin-bottom: 8px; 
+            display: block; text-transform: uppercase;
         }
-        .message.tutor {
-            background: #f3e5f5;
-            border-left: 5px solid #8957e5;
-        }
-        .message .author {
-            font-weight: bold;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            color: #238636;
-        }
-        .message.tutor .author {
-            color: #8957e5;
-        }
-        .message .timestamp {
-            font-size: 0.75em;
-            color: #999;
-            margin-left: 10px;
-        }
-        .message .content {
-            font-size: 1.05em;
+        .user .author-label { color: #1b5e20; }
+        .tutor .author-label { color: #4a148c; }
+
+        /* AQUI ESTÁ O SEGREDO: Cor do texto forçada para preto */
+        .content-text {
+            color: #000000 !important; 
+            font-size: 1.1em;
             white-space: pre-wrap;
-            word-wrap: break-word;
+            opacity: 1 !important; /* Remove qualquer transparência (ofuscamento) */
         }
-        .footer {
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 2px solid #eee;
-            text-align: center;
-            color: #999;
-            font-size: 0.85em;
-        }
-        .footer strong {
-            color: #238636;
-        }
-        @media print {
-            body { background: white; padding: 0; }
-            .container { box-shadow: none; padding: 40px; }
-        }
+        .footer { text-align: center; margin-top: 50px; font-size: 0.8em; color: #777; border-top: 1px solid #eee; pt: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>LEGADO EPISTÊMICO</h1>
-            <div class="subtitle">Registro Acadêmico da Jornada OESD</div>
+            <h1>Legado Epistêmico</h1>
+            <p>Ordem Epistemológica de Simbiose Digital</p>
         </div>
         
         <div class="metadata">
             <p><strong>Pioneiro:</strong> ${alunoID}</p>
-            <p><strong>Data de Exportação:</strong> ${new Date().toLocaleDateString('pt-BR', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            })}</p>
-            <p><strong>Total de Interações:</strong> ${messages.length} mensagens</p>
+            <p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p>
             <p><strong>Sistema:</strong> IOFW v3.2 - Faculdade Íntegra</p>
         </div>
         
         <div class="stats">
-            <div class="stat-badge">
-                <div class="label">Rigor</div>
-                <div class="value">${stats.rigor}%</div>
-            </div>
-            <div class="stat-badge" style="background: linear-gradient(135deg, #8957e5, #a78bfa);">
-                <div class="label">Imaginação</div>
-                <div class="value">${stats.imaginacao}%</div>
-            </div>
-            <div class="stat-badge" style="background: linear-gradient(135deg, #d4af37, #f0c75e);">
-                <div class="label">Simbiose</div>
-                <div class="value">${stats.simbiose}%</div>
-            </div>
+            <div class="stat-badge" style="background: #238636;">RIGOR: ${stats.rigor}%</div>
+            <div class="stat-badge" style="background: #8957e5;">IMAGINAÇÃO: ${stats.imaginacao}%</div>
+            <div class="stat-badge" style="background: #d4af37;">SIMBIOSE: ${stats.simbiose}%</div>
         </div>
-        
-        <hr style="margin: 40px 0; border: none; border-top: 2px solid #eee;">
-        
+
         ${messages.map((m, i) => `
             <div class="message ${m.autor === 'Tutor' ? 'tutor' : 'user'}">
-                <div class="author">
-                    ${m.autor === 'Tutor' ? '🎓 Tutor OESD' : '👤 ' + m.autor}
-                    ${m.timestamp ? `<span class="timestamp">${Utils.formatTimestamp(m.timestamp)}</span>` : ''}
-                </div>
-                <div class="content">${m.texto}</div>
+                <span class="author-label">${m.autor === 'Tutor' ? '🎓 Tutor OESD' : '👤 ' + m.autor}</span>
+                <div class="content-text">${m.texto}</div>
             </div>
         `).join('')}
         
         <div class="footer">
-            <p>Documento gerado pelo <strong>Sistema IOFW v3.2</strong></p>
-            <p>Faculdade Íntegra • Sistema OESD de Tutoria Epistêmica</p>
-            <p style="margin-top: 10px; font-size: 0.8em;">
-                © 2026 Carlos Alberto Reis • Todos os direitos reservados
-            </p>
+            <p>© 2025 Carlos Alberto Reis. Todos os direitos reservados.</p>
+            <p>Documento Gerado por Inteligência Simbiótica</p>
         </div>
     </div>
 </body>
@@ -1218,11 +1124,12 @@ const CONFIG = {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Legado_Epistemico_${alunoID}_${Date.now()}.html`;
+                a.download = `Legado_${alunoID}_${Date.now()}.html`;
                 a.click();
                 URL.revokeObjectURL(url);
             }, [messages, alunoID, stats]);
-            
+  
+          
             // ============================================
             // === HANDLER: Publicar na Biblioteca ===
             // ============================================
