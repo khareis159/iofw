@@ -1023,89 +1023,44 @@ const CONFIG = {
             // ============================================
             // === HANDLER: Exportar Histórico ===
             // ============================================
-            
+
 const handleExport = useCallback(() => {
-                const htmlContent = `<!DOCTYPE html>
-<html lang="pt-BR" style="height: auto;">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Legado Epistêmico - ${alunoID}</title>
-    <style>
-        /* DESTRAVAMENTO DE ROLAGEM */
-        html, body { 
-            margin: 0; 
-            padding: 0; 
-            height: auto !important; 
-            overflow-y: auto !important; /* Libera o scroll vertical */
-            background: #ffffff;
-        }
-        body { 
-            font-family: 'Georgia', serif; 
-            color: #000000 !important; 
-            line-height: 1.8; 
-            padding: 40px 20px; 
-        }
-        .container { 
-            max-width: 850px; 
-            margin: 0 auto; 
-            border: 2px solid #238636; 
-            padding: 40px; 
-            background: #fff;
-            height: auto;
-        }
-        .header { text-align: center; border-bottom: 2px solid #238636; padding-bottom: 20px; margin-bottom: 30px; }
-        .header h1 { color: #238636; font-size: 2.2em; margin: 0; }
-        .metadata { font-size: 0.9em; margin-bottom: 30px; color: #333; background: #f4f4f4; padding: 15px; border-left: 5px solid #238636; }
-        .stats { display: flex; gap: 15px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-        .stat-badge { padding: 8px 15px; border-radius: 4px; color: white; font-weight: bold; font-family: sans-serif; font-size: 12px; }
-        .message { margin: 25px 0; padding: 25px; border-radius: 8px; border: 1px solid #eee; page-break-inside: avoid; }
-        .message.user { background: #f9fff9; border-left: 5px solid #238636; }
-        .message.tutor { background: #f9f9ff; border-left: 5px solid #8957e5; }
-        .author-label { font-weight: bold; font-size: 0.8em; margin-bottom: 10px; display: block; text-transform: uppercase; font-family: sans-serif; }
-        .user .author-label { color: #238636; }
-        .tutor .author-label { color: #8957e5; }
-        .content-text { color: #000000 !important; opacity: 1 !important; font-size: 1.1em; white-space: pre-wrap; word-wrap: break-word; }
-        .footer { text-align: center; margin-top: 60px; font-size: 0.8em; color: #666; border-top: 1px solid #eee; padding-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>LEGADO EPISTÊMICO</h1>
-            <p style="font-family: sans-serif; font-size: 12px; letter-spacing: 2px; color: #666;">FACULDADE SIMBIÓTICA HYPERWEB3 // OESD</p>
-        </div>
-        <div class="metadata">
-            <p><strong>Pioneiro:</strong> ${alunoID}</p>
-            <p><strong>Data de Emissão:</strong> ${new Date().toLocaleString('pt-BR')}</p>
-            <p><strong>Certificação:</strong> Carlos Alberto Reis &copy; 2025</p>
-        </div>
-        <div class="stats">
-            <div class="stat-badge" style="background:#238636">RIGOR: ${stats.rigor}%</div>
-            <div class="stat-badge" style="background:#8957e5">IMAGINAÇÃO: ${stats.imaginacao}%</div>
-            <div class="stat-badge" style="background:#d4af37">SIMBIOSE: ${stats.simbiose}%</div>
-        </div>
-        ${messages.map(m => `
-            <div class="message ${m.autor === 'Tutor' ? 'tutor' : 'user'}">
-                <span class="author-label">${m.autor === 'Tutor' ? '🎓 Tutor Simbiótico' : '👤 ' + m.autor}</span>
-                <div class="content-text">${m.texto}</div>
-            </div>
-        `).join('')}
-        <div class="footer">
-            <p><strong>&copy; 2025 Carlos Alberto Reis</strong></p>
-            <p>Documento gerado pelo sistema IOFW v3.2 - Propriedade Intelectual Protegida</p>
-        </div>
-    </div>
-</body>
-</html>`;
-                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+                // Formatação em Markdown: O padrão ouro da documentação técnica
+                const mdContent = `
+# 📜 LEGADO EPISTÊMICO: ${alunoID.toUpperCase()}
+## Ordem Epistemológica de Simbiose Digital (OESD)
+---
+**Pioneiro:** ${alunoID}
+**Data de Emissão:** ${new Date().toLocaleString('pt-BR')}
+**Sistema:** IOFW v3.2 - Faculdade Íntegra
+**Certificação de Autoria:** Carlos Alberto Reis © 2025
+
+### 📊 ATRIBUTOS DE CARREIRA
+- **RIGOR CIENTÍFICO:** ${stats.rigor}%
+- **IMAGINAÇÃO ESTÉTICA:** ${stats.imaginacao}%
+- **ÍNDICE DE SIMBIOSE:** ${stats.simbiose}%
+
+---
+### 🧠 REGISTRO DA FORJA (DIÁLOGOS)
+
+${messages.map(m => `#### [${m.autor.toUpperCase()}]
+${m.texto}
+
+`).join('---')}
+
+---
+**© 2025 CARLOS ALBERTO REIS**
+*Documento gerado por Inteligência Simbiótica. Propriedade Intelectual Protegida.*
+                `;
+
+                const blob = new Blob([mdContent.trim()], { type: 'text/markdown;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Legado_${alunoID}.html`;
+                a.download = `Legado_${alunoID}.md`; // Formato .md (Markdown)
                 a.click();
                 URL.revokeObjectURL(url);
-            }, [messages, alunoID, stats]);
+            }, [messages, alunoID, stats]);           
   
           
             // ============================================
