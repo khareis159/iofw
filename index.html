@@ -343,7 +343,7 @@
         
 const CONFIG = {
             DATABASE_URL: "https://khareisbook-default-rtdb.firebaseio.com/",
-            OESD_MASK: "Z3NrX0JHVm1NemxxOVhLODFuZjlIaDI4V0dkeWIzRllGU3JteUt2U0dzVFlEcmpOUFFYczRnMHQ=", 
+            OESD_MASK: "Z3NrX2lwSjFzcUtJSk5YRVJPeFVtR1dWV0dkeWIzRllBYUc3U2RMdjVncXJZczA2MlU0ZlRXR1U=", 
             BIBLIOTECA_URL: "https://khareis159.github.io/khareisbook/",
             LIMITES: { STAT_MAX: 100, STAT_INCREMENT: 2, STAT_MIN: 10 },
             MEDALHAS: {
@@ -542,14 +542,21 @@ const CONFIG = {
         // === SERVIÇO DE TUTORIA (GROQ) ===
         // ============================================
         
-       const TutorService = {
+     const TutorService = {
           async ask(userMessage, history = []) {
                 try {
-                    const chaveInvisivel = atob(CONFIG.OESD_MASK);
+                    // Proteção contra máscara mal formatada
+                    let chaveInvisivel;
+                    try {
+                        chaveInvisivel = atob(CONFIG.OESD_MASK.trim());
+                    } catch (e) {
+                        throw new Error("A máscara OESD_MASK na linha 257 está mal formatada ou contém espaços.");
+                    }
+
                     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                         method: "POST",
                         headers: {
-                            "Authorization": `Bearer ${chaveInvisivel.trim()}`,
+                            "Authorization": `Bearer ${chaveInvisivel}`,
                             "Content-Type": "application/json"
                         },
                         body: JSON.stringify({
