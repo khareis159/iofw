@@ -744,6 +744,7 @@ const CONFIG = {
    
 
 // --- MOTOR GRÁFICO V4.4 (COM TRATAMENTO DE ERRO DE IMAGEM) ---
+     // --- MOTOR GRÁFICO V5.0 (COM LINK DE BACKUP) ---
             const renderTextoComGrafico = (texto) => {
                 if (!texto.includes("[[GRAFICO:") && !texto.includes("[[IMG:") && !texto.includes("[[SVG:")) {
                     return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
@@ -753,90 +754,71 @@ const CONFIG = {
                 
                 return <div className="whitespace-pre-wrap font-sans">
                     {partes.map((parte, i) => {
-                        // 1. GRÁFICOS (Charts)
+                        // 1. GRÁFICOS
                         if (parte.startsWith("[[GRAFICO:")) {
                             try {
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
                                 const params = Object.fromEntries(conteudo.split(', ').map(s => {
-                                    const parts = s.split('=');
-                                    return [parts[0].trim(), parts.slice(1).join('=').trim() || ""];
+                                    const p = s.split('=');
+                                    return [p[0].trim(), p.slice(1).join('=').trim() || ""];
                                 }));
+                                const labels = params.labels ? params.labels.split(',').map(s=>s.trim()) : [];
+                                const vals = params.dados ? params.dados.split(',').map(s=>Number(s.trim())) : [];
                                 
-                                const labels = params.labels ? params.labels.split(',').map(s => s.trim()) : [];
-                                const dataValues = params.dados ? params.dados.split(',').map(s => Number(s.trim())) : [];
+                                // Tipos
+                                let t = (params.tipo || 'bar').toLowerCase();
+                                if(t.includes('pizza')) t='pie'; 
                                 
-                                let chartType = (params.tipo || 'bar').toLowerCase();
-                                if (['pizza', 'torta'].includes(chartType)) chartType = 'pie';
-                                if (['rosca', 'anel'].includes(chartType)) chartType = 'doughnut';
-                                if (['linha', 'linhas'].includes(chartType)) chartType = 'line';
-                                if (['barra', 'barras'].includes(chartType)) chartType = 'bar';
-                                
-                                const title = params.titulo || 'Análise OESD';
-
-                                const qcConfig = {
-                                    type: chartType,
-                                    data: {
-                                        labels: labels,
-                                        datasets: [{
-                                            label: "Valor",
-                                            data: dataValues,
-                                            backgroundColor: ['#238636', '#8957e5', '#d4af37', '#ef4444', '#3b82f6', '#ffffff'],
-                                            borderColor: '#0d1117',
-                                            borderWidth: 2
-                                        }]
-                                    },
-                                    options: {
-                                        legend: { display: (chartType !== 'bar'), labels: { fontColor: '#fff' } },
-                                        title: { display: true, text: title, fontColor: '#fff', fontSize: 16 },
-                                        scales: {
-                                            yAxes: (chartType === 'bar' || chartType === 'line') ? [{ ticks: { fontColor: '#fff', beginAtZero: true }, gridLines: { color: '#30363d' } }] : [],
-                                            xAxes: (chartType === 'bar' || chartType === 'line') ? [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }] : []
-                                        }
-                                    }
+                                const qc = {
+                                    type: t,
+                                    data: { labels: labels, datasets: [{ label: "Dados", data: vals, backgroundColor: ['#238636','#8957e5','#d4af37'], borderWidth:0 }] },
+                                    options: { title: { display: true, text: params.titulo || 'OESD', fontColor:'#fff' }, legend: { display: t!=='bar', labels:{fontColor:'#fff'} } }
                                 };
-                                const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qcConfig))}&bkg=transparent&width=500&height=300&devicePixelRatio=1.0`;
-                                return <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d] shadow-lg flex justify-center"><img src={url} alt="Chart" className="rounded max-w-full h-auto"/></div>;
-                            } catch (e) { return null; }
+                                const u = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qc))}&bkg=transparent&w=400&h=300`;
+                                return <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d]"><img src={u} className="w-full"/></div>;
+                            } catch { return null; }
                         }
 
-                        // 2. FOTOS REAIS (Melhorada para Sócrates)
+                        // 2. FOTOS (FIX SOLICITADO)
                         if (parte.startsWith("[[IMG:")) {
-                            let rawPrompt = parte.replace("[[IMG:", "").replace("]]", "").trim();
-                            // Limpeza: remove quebras de linha e caracteres perigosos, limita tamanho
-                            let safePrompt = rawPrompt.replace(/[\r\n\t]/g, " ").replace(/["]/g, "").substring(0, 450);
+                            let raw = parte.replace("[[IMG:", "").replace("]]", "").trim();
+                            // Limpeza Agressiva: Só deixa letras, números e vírgulas
+                            let clean = raw.replace(/[^a-zA-Z0-9 ,]/g, "").substring(0, 300);
                             
-                            // Seed aleatória força uma nova imagem sempre que carrega
-                            const seed = Math.floor(Math.random() * 100000);
-                            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=800&height=600&model=flux&nologo=true&seed=${seed}`;
+                            // URL direta sem parâmetros complicados
+                            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?nologo=true`;
                             
                             return (
-                                <div key={i} className="my-4 border border-[#30363d] rounded-lg overflow-hidden relative group bg-black min-h-[300px] flex items-center justify-center">
-                                    <div className="absolute top-2 left-2 bg-black/60 text-[10px] text-neon px-2 py-1 rounded backdrop-blur font-mono border border-[#30363d] z-10">IMAGINAÇÃO ESTÉTICA</div>
-                                    <img 
-                                        src={url} 
-                                        alt={rawPrompt} 
-                                        className="w-full object-cover transition-opacity duration-500" 
-                                        loading="lazy"
-                                        onError={(e) => {
-                                            e.target.style.display = 'none'; // Esconde se quebrar
-                                            e.target.parentNode.innerHTML += `<div class="p-4 text-center text-red-500 text-xs font-mono">⚠️ ERRO AO RENDERIZAR: A descrição visual é muito complexa para o link. Tente simplificar.</div>`;
-                                        }}
-                                    />
+                                <div key={i} className="my-4 border border-[#30363d] rounded-lg p-1 bg-black">
+                                    <div style={{position:'relative', minHeight:'200px'}}>
+                                        <span className="absolute top-2 left-2 bg-black/80 text-[9px] text-[#238636] px-2 rounded border border-[#30363d]">IMAGINAÇÃO ESTÉTICA</span>
+                                        
+                                        <img 
+                                            src={imgUrl} 
+                                            alt="Carregando..." 
+                                            style={{width:'100%', display:'block', minHeight:'200px', objectFit:'cover'}}
+                                        />
+                                    </div>
+                                    
+                                    {/* Link de Segurança - Caso a imagem quebre */}
+                                    <div className="text-center p-2 border-t border-[#30363d] mt-1">
+                                        <a href={imgUrl} target="_blank" className="text-[10px] text-blue-400 hover:text-white underline">
+                                            [ABRIR IMAGEM EM NOVA GUIA]
+                                        </a>
+                                    </div>
                                 </div>
                             );
                         }
 
-                        // 3. VETORES E GEOMETRIA (SVG)
+                        // 3. SVG
                         if (parte.startsWith("[[SVG:")) {
-                            let svgCode = parte.replace("[[SVG:", "").replace("]]", "").trim();
-                            return <div key={i} className="my-4 bg-[#161b22] p-6 rounded border border-[#30363d] flex justify-center items-center" dangerouslySetInnerHTML={{ __html: svgCode }} />;
+                             return <div key={i} className="my-4 bg-[#161b22] p-4 rounded border border-[#30363d]" dangerouslySetInnerHTML={{ __html: parte.replace("[[SVG:", "").replace("]]", "") }} />;
                         }
 
                         return <span key={i}>{parte}</span>;
                     })}
                 </div>;
             };
-
          
             useEffect(() => {
                 if (chatRef.current) {
@@ -1290,7 +1272,6 @@ ${m.texto}
     </script>
 </body>
 </html>
-
 
 
 
