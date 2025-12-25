@@ -739,8 +739,9 @@ const CONFIG = {
         function ChatWindow({ messages, loading }) {
             const chatRef = useRef(null);
    // --- RENDERIZADOR DE GRÁFICOS INTELIGENTE ---
+  
+// --- RENDERIZADOR DE GRÁFICOS INTELIGENTE (V3 - DADOS NUMÉRICOS REAIS) ---
             const renderTextoComGrafico = (texto) => {
-                // Se não tiver gráfico, retorna texto normal
                 if (!texto.includes("[[GRAFICO:")) return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
 
                 const partes = texto.split(/(\[\[GRAFICO:.*?\]\])/g);
@@ -749,52 +750,58 @@ const CONFIG = {
                     {partes.map((parte, i) => {
                         if (parte.startsWith("[[GRAFICO:")) {
                             try {
-                                // Extrai os dados do comando da IA
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
-                                const params = Object.fromEntries(conteudo.split(', ').map(s => s.split('=')));
+                                // Separador seguro que lida com espaços da IA
+                                const params = Object.fromEntries(conteudo.split(', ').map(s => {
+                                    const [k, v] = s.split('=');
+                                    return [k, v || ""];
+                                }));
                                 
-                                const labels = params.labels ? params.labels.split(',') : [];
-                                const data = params.dados ? params.dados.split(',') : [];
+                                // CORREÇÃO FATAL: LIMPAR ESPAÇOS E TRANSFORMAR EM NÚMEROS
+                                const labels = params.labels ? params.labels.split(',').map(s => s.trim()) : [];
+                                const dataValues = params.dados ? params.dados.split(',').map(s => Number(s.trim())) : [];
+                                
                                 const type = params.tipo || 'bar';
-                                const title = params.titulo || 'Gráfico OESD';
+                                const title = params.titulo || 'Análise OESD';
 
-                                // Configuração do QuickChart.io
+                                // Configuração para o QuickChart
                                 const qcConfig = {
                                     type: type,
                                     data: {
                                         labels: labels,
-datasets: [{
-                                            label: title,
-                                            data: data,
-                                            // Corrigindo para garantir que cada barra pegue uma cor da lista
-                                            backgroundColor: ['#238636', '#a855f7', '#d4af37', '#ef4444', '#3b82f6'], 
+                                        datasets: [{
+                                            label: "Dados",
+                                            data: dataValues, // Agora envia Números (70, 30) e não Textos ("70", "30")
+                                            backgroundColor: ['#238636', '#8957e5', '#d4af37', '#ef4444', '#3b82f6', '#ffffff'],
                                             borderColor: '#0d1117',
                                             borderWidth: 2
-                                        }]                                        
-
+                                        }]
                                     },
                                     options: {
+                                        legend: { display: (type === 'pie' || type === 'doughnut'), labels: { fontColor: '#fff' } },
                                         title: { display: true, text: title, fontColor: '#fff', fontSize: 16 },
-                                        legend: { labels: { fontColor: '#fff' } },
                                         scales: {
-                                            yAxes: [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }],
-                                            xAxes: [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }]
+                                            yAxes: type === 'bar' ? [{ ticks: { fontColor: '#fff', beginAtZero: true }, gridLines: { color: '#30363d' } }] : [],
+                                            xAxes: type === 'bar' ? [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }] : []
                                         }
                                     }
                                 };
-                                const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qcConfig))}&bkg=transparent&width=500&height=300`;
+                                
+                                const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qcConfig))}&bkg=transparent&width=500&height=300&devicePixelRatio=1.0`;
                                 
                                 return (
-                                    <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d] shadow-lg">
-                                        <img src={url} alt="Gráfico Gerado" className="w-full rounded" />
+                                    <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d] shadow-lg flex justify-center">
+                                        <img src={url} alt="Gráfico" className="rounded max-w-full h-auto" />
                                     </div>
                                 );
-                            } catch (e) { return <span key={i} className="text-red-500">[Erro ao renderizar gráfico]</span>; }
+                            } catch (e) { return <span key={i} className="text-red-500 text-xs">[Erro Visualização]</span>; }
                         }
                         return <span key={i}>{parte}</span>;
                     })}
                 </div>;
-            };         
+            };          
+
+         
             useEffect(() => {
                 if (chatRef.current) {
                     chatRef.current.scrollTo({
