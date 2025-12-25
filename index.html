@@ -558,7 +558,7 @@ const CONFIG = {
                         body: JSON.stringify({
                             model: "llama-3.3-70b-versatile",
                             messages: [
-                                { role: "system", content: "Você é o Reitor Simbiótico da OESD. Use o lema Mens et Machina Unum Sunt." },
+                                { role: "system", content: "Você é o Tutor OESD. Responda com Rigor e Imaginação. PARA CRIAR GRÁFICOS: Não desenhe com texto. Use estritamente este formato: [[GRAFICO: tipo=bar|pie|line, labels=Item1,Item2, dados=10,20, titulo=Seu Titulo]]. Exemplo: [[GRAFICO: tipo=pie, labels=Aprovado,Reprovado, dados=80,20, titulo=Resultados]]." },
                                 { role: "user", content: userMessage }
                             ]
                         })
@@ -738,7 +738,61 @@ const CONFIG = {
         
         function ChatWindow({ messages, loading }) {
             const chatRef = useRef(null);
-            
+   // --- RENDERIZADOR DE GRÁFICOS INTELIGENTE ---
+            const renderTextoComGrafico = (texto) => {
+                // Se não tiver gráfico, retorna texto normal
+                if (!texto.includes("[[GRAFICO:")) return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
+
+                const partes = texto.split(/(\[\[GRAFICO:.*?\]\])/g);
+                
+                return <div className="whitespace-pre-wrap font-sans">
+                    {partes.map((parte, i) => {
+                        if (parte.startsWith("[[GRAFICO:")) {
+                            try {
+                                // Extrai os dados do comando da IA
+                                const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
+                                const params = Object.fromEntries(conteudo.split(', ').map(s => s.split('=')));
+                                
+                                const labels = params.labels ? params.labels.split(',') : [];
+                                const data = params.dados ? params.dados.split(',') : [];
+                                const type = params.tipo || 'bar';
+                                const title = params.titulo || 'Gráfico OESD';
+
+                                // Configuração do QuickChart.io
+                                const qcConfig = {
+                                    type: type,
+                                    data: {
+                                        labels: labels,
+                                        datasets: [{
+                                            label: title,
+                                            data: data,
+                                            backgroundColor: ['#238636', '#8957e5', '#d4af37', '#ffffff', '#ff6b6b'],
+                                            borderColor: '#000',
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        title: { display: true, text: title, fontColor: '#fff', fontSize: 16 },
+                                        legend: { labels: { fontColor: '#fff' } },
+                                        scales: {
+                                            yAxes: [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }],
+                                            xAxes: [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }]
+                                        }
+                                    }
+                                };
+                                const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qcConfig))}&bkg=transparent&width=500&height=300`;
+                                
+                                return (
+                                    <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d] shadow-lg">
+                                        <img src={url} alt="Gráfico Gerado" className="w-full rounded" />
+                                    </div>
+                                );
+                            } catch (e) { return <span key={i} className="text-red-500">[Erro ao renderizar gráfico]</span>; }
+                        }
+                        return <span key={i}>{parte}</span>;
+                    })}
+                </div>;
+            };         
             useEffect(() => {
                 if (chatRef.current) {
                     chatRef.current.scrollTo({
@@ -778,9 +832,7 @@ const CONFIG = {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="whitespace-pre-wrap leading-relaxed">
-                                        {m.texto}
-                                    </div>
+                          {renderTextoComGrafico(m.texto)}                                  
                                 </div>
                             </div>
                         ))
