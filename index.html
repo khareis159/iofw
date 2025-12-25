@@ -930,7 +930,7 @@ const CONFIG = {
         // === COMPONENTE: SIDEBAR ===
         // ============================================
         
-        function Sidebar({ alunoID, stats, medals, visits, onPublish, onExport, onLogout }) {
+        function Sidebar({ alunoID, stats, medals, visits, onPublish, onExport, onLogout, onManual }) {
             return (
                 <aside className="w-full md:w-80 bg-[#0d1117] border-r border-[#30363d] p-6 flex flex-col overflow-y-auto">
                     {/* Header */}
@@ -983,7 +983,14 @@ const CONFIG = {
                             <i className="fas fa-download"></i>
                             Baixar Histórico
                         </button>
-                        
+                        {/* Manual */}
+                        <button
+                            onClick={onManual}
+                            className="btn-secondary w-full flex items-center justify-center gap-2 mt-2"
+                        >
+                            <i className="fas fa-book-reader"></i>
+                            Manual do Aluno
+                        </button>
                         {/* Publicar */}
                         <button
                             onClick={onPublish}
@@ -1028,7 +1035,7 @@ const CONFIG = {
             const [loading, setLoading] = useState(false);
             const [publishing, setPublishing] = useState(false);
             const [visits, setVisits] = useState(1000);
-            
+            const [vendoManual, setVendoManual] = useState(false);
             // Computed values
             const medals = useMemo(() => MedalService.calcular(stats), [stats]);
             
@@ -1235,6 +1242,7 @@ ${m.texto}
                         onPublish={handlePublish}
                         onExport={handleExport}
                         onLogout={handleLogout}
+                        onManual={() => setVendoManual(true)}  // <--- NOVA LINHA AQUI
                     />
                     
                     {/* Main Content */}
@@ -1269,7 +1277,114 @@ ${m.texto}
                                 </div>
                             </div>
                         )}
-                    </main>
+  {/* MODAL MANUAL DO ALUNO (CÓDICE ESTENDIDO) */}
+                        {vendoManual && (
+                            <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+                                <div className="bg-[#0d1117] border border-[#30363d] w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-xl shadow-2xl relative flex flex-col">
+                                    
+                                    {/* Cabeçalho do Manual */}
+                                    <div className="p-6 border-b border-[#30363d] bg-[#161b22] sticky top-0 z-10 flex justify-between items-center">
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-[#238636] mono">CÓDICE OESD</h2>
+                                            <p className="text-xs text-gray-500 uppercase tracking-widest">Manual de Sobrevivência e Prosperidade</p>
+                                        </div>
+                                        <button onClick={() => setVendoManual(false)} className="text-gray-400 hover:text-white transition-colors text-xl font-bold px-4">✕</button>
+                                    </div>
+                                    
+                                    {/* Conteúdo do Manual */}
+                                    <div className="p-8 space-y-8 text-gray-300 font-sans leading-relaxed text-sm overflow-y-auto custom-scroll">
+                                        
+                                        {/* Seção 0: Boas Vindas (Quebra de Gelo) */}
+                                        <section className="bg-[#23863610] p-6 rounded-lg border-l-4 border-[#238636]">
+                                            <h3 className="text-white font-bold text-lg mb-2 flex items-center gap-2"><i className="fas fa-hand-sparkles"></i> 0. NÃO TENHA MEDO</h3>
+                                            <p>Bem-vindo, Pioneiro. A tecnologia digital pode parecer assustadora, mas aqui <strong>você é o piloto</strong>. Este sistema foi desenhado para ser "Inquebrantável". Não importa onde você clique, você não vai "quebrar" a internet. A IA (o Tutor) está aqui para servir ao seu intelecto, não para julgá-lo.</p>
+                                        </section>
+
+                                        {/* Seção 1: Como Conversar */}
+                                        <section>
+                                            <h3 className="text-[#8957e5] font-bold text-base mb-3 uppercase tracking-wider">1. A Arte da Forja (Como Conversar)</h3>
+                                            <div className="grid md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <strong className="text-white block mb-2">Para Iniciantes:</strong>
+                                                    <p className="mb-2">Fale como se estivesse conversando com um professor sábio e paciente. Não precisa usar códigos.</p>
+                                                    <ul className="list-disc pl-5 space-y-1 text-gray-400">
+                                                        <li><em>"Explique o que é filosofia para uma criança de 10 anos."</em></li>
+                                                        <li><em>"Me ajude a escrever um texto sobre vendas."</em></li>
+                                                    </ul>
+                                                </div>
+                                                <div>
+                                                    <strong className="text-white block mb-2">Para Avançados:</strong>
+                                                    <p className="mb-2">Use Engenharia de Prompt (Comandos diretos) para obter resultados técnicos.</p>
+                                                    <ul className="list-disc pl-5 space-y-1 text-gray-400">
+                                                        <li><em>"Analise este texto sob a ótica do Estoicismo."</em></li>
+                                                        <li><em>"Crie uma tabela comparativa entre X e Y."</em></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        {/* Seção 2: Os Atributos */}
+                                        <section>
+                                            <h3 className="text-[#238636] font-bold text-base mb-3 uppercase tracking-wider">2. Como Evoluir seu Nível</h3>
+                                            <p className="mb-4">O sistema lê suas interações e sobe sua barra de progresso lateral automaticamente.</p>
+                                            <div className="grid md:grid-cols-3 gap-4 text-xs">
+                                                <div className="bg-[#010409] p-4 rounded border border-[#30363d]">
+                                                    <strong className="text-[#238636] block text-sm mb-1">RIGOR</strong>
+                                                    Aumenta quando você pede dados, fontes, fatos históricos ou correções técnicas.
+                                                </div>
+                                                <div className="bg-[#010409] p-4 rounded border border-[#30363d]">
+                                                    <strong className="text-[#8957e5] block text-sm mb-1">IMAGINAÇÃO</strong>
+                                                    Aumenta quando você pede histórias, imagens, criatividade ou ideias futuristas.
+                                                </div>
+                                                <div className="bg-[#010409] p-4 rounded border border-[#30363d]">
+                                                    <strong className="text-white block text-sm mb-1">SIMBIOSE</strong>
+                                                    É a média dos dois. Mostra o quão equilibrada é sua mente digital.
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        {/* Seção 3: Comandos Visuais */}
+                                        <section>
+                                            <h3 className="text-[#d4af37] font-bold text-base mb-3 uppercase tracking-wider">3. O Poder Visual (Gráficos e Imagens)</h3>
+                                            <p className="mb-4">O Tutor pode "ver" e "desenhar". Use estas palavras-chave mágicas na conversa:</p>
+                                            <ul className="space-y-3 bg-[#010409] p-4 rounded border border-[#30363d]">
+                                                <li>📸 <strong>Fotos:</strong> Digite <em>"Gere uma imagem realista de uma biblioteca antiga"</em>.</li>
+                                                <li>📊 <strong>Gráficos:</strong> Digite <em>"Gere um gráfico de pizza sobre meu tempo: 50% Estudo, 50% Lazer"</em>.</li>
+                                                <li>📐 <strong>Geometria:</strong> Digite <em>"Desenhe um quadrado vermelho usando vetores"</em>.</li>
+                                            </ul>
+                                        </section>
+
+                                        {/* Seção 4: Dinheiro */}
+                                        <section>
+                                            <h3 className="text-blue-400 font-bold text-base mb-3 uppercase tracking-wider">4. Ecossistema Financeiro (Sua Carreira)</h3>
+                                            <p className="mb-2">Não estude de graça. Seu conhecimento vale dinheiro.</p>
+                                            <ol className="list-decimal pl-5 space-y-2 text-gray-400">
+                                                <li>Tenha uma conversa valiosa com o Tutor (Ex: Crie um Ebook, Um Resumo, Uma Tese).</li>
+                                                <li>Clique no botão verde <strong>PUBLICAR TRABALHO</strong> no menu esquerdo.</li>
+                                                <li>O sistema enviará sua obra para a <strong>Biblioteca KhareisBook</strong>.</li>
+                                                <li>Você define o preço. Se vender, você fica com <strong>90%</strong> do valor via Pix (10% fica para manutenção da plataforma).</li>
+                                                <li>O Admin recebe o pagamento, entrega o arquivo e repassa sua parte. Simples.</li>
+                                            </ol>
+                                        </section>
+
+                                        {/* Rodapé do Manual */}
+                                        <div className="text-center text-xs text-gray-600 mt-8 pt-8 border-t border-[#30363d]">
+                                            <p>"O analfabeto do século 21 não será aquele que não sabe ler e escrever, mas aquele que não sabe aprender, desaprender e reaprender." – Alvin Toffler</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Botão Fechar */}
+                                    <div className="p-6 bg-[#0d1117] border-t border-[#30363d] sticky bottom-0 z-10 text-center">
+                                        <button onClick={() => setVendoManual(false)} className="w-full md:w-1/3 py-3 bg-[#238636] text-white rounded font-bold hover:bg-[#2ea043] transition shadow-lg shadow-green-900/20">
+                                            LI E COMPREENDI A MISSÃO
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+
+                  </main>
                 </div>
             );
         }
@@ -1283,7 +1398,6 @@ ${m.texto}
     </script>
 </body>
 </html>
-
 
 
 
