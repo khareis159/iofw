@@ -792,14 +792,19 @@ const CONFIG = {
                                             borderWidth: 2
                                         }]
                                     },
-                                    options: {
+                                
+options: {
                                         legend: { display: (chartType !== 'bar'), labels: { fontColor: '#fff' } },
                                         title: { display: true, text: title, fontColor: '#fff', fontSize: 16 },
                                         scales: {
-                                            yAxes: chartType === 'bar' || chartType === 'line' ? [{ ticks: { fontColor: '#fff', beginAtZero: true }, gridLines: { color: '#30363d' } }] : [],
-                                            xAxes: chartType === 'bar' || chartType === 'line' ? [{ ticks: { fontColor: '#fff', gridLines: { color: '#30363d' } }] : []
+                                            yAxes: (chartType === 'bar' || chartType === 'line') ? 
+                                                [{ ticks: { fontColor: '#fff', beginAtZero: true }, gridLines: { color: '#30363d' } }] : [],
+                                            xAxes: (chartType === 'bar' || chartType === 'line') ? 
+                                                [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }] : []
                                         }
                                     }
+
+
                                 };
                                 const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qcConfig))}&bkg=transparent&width=500&height=300&devicePixelRatio=1.0`;
                                 return <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d] shadow-lg flex justify-center"><img src={url} alt="Chart" className="rounded max-w-full h-auto"/></div>;
@@ -1286,6 +1291,7 @@ ${m.texto}
     </script>
 </body>
 </html>
+
 
 
 
