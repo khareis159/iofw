@@ -742,7 +742,8 @@ const CONFIG = {
         function ChatWindow({ messages, loading }) {
             const chatRef = useRef(null);
    
-// --- MOTOR GRÁFICO V4.3 (CORRIGIDO) ---
+
+// --- MOTOR GRÁFICO V4.4 (COM TRATAMENTO DE ERRO DE IMAGEM) ---
             const renderTextoComGrafico = (texto) => {
                 if (!texto.includes("[[GRAFICO:") && !texto.includes("[[IMG:") && !texto.includes("[[SVG:")) {
                     return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
@@ -752,7 +753,7 @@ const CONFIG = {
                 
                 return <div className="whitespace-pre-wrap font-sans">
                     {partes.map((parte, i) => {
-                        // 1. GRÁFICOS (Chart.js via QuickChart)
+                        // 1. GRÁFICOS (Charts)
                         if (parte.startsWith("[[GRAFICO:")) {
                             try {
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
@@ -764,7 +765,6 @@ const CONFIG = {
                                 const labels = params.labels ? params.labels.split(',').map(s => s.trim()) : [];
                                 const dataValues = params.dados ? params.dados.split(',').map(s => Number(s.trim())) : [];
                                 
-                                // TRADUTOR DE TIPOS (Pizza, Rosca, etc)
                                 let chartType = (params.tipo || 'bar').toLowerCase();
                                 if (['pizza', 'torta'].includes(chartType)) chartType = 'pie';
                                 if (['rosca', 'anel'].includes(chartType)) chartType = 'doughnut';
@@ -799,23 +799,34 @@ const CONFIG = {
                             } catch (e) { return null; }
                         }
 
-                        // 2. FOTOS REAIS (Com Proteção de Link Longo)
+                        // 2. FOTOS REAIS (Melhorada para Sócrates)
                         if (parte.startsWith("[[IMG:")) {
                             let rawPrompt = parte.replace("[[IMG:", "").replace("]]", "").trim();
-                            // TRUNCAR TEXTO PARA NÃO QUEBRAR URL
-                            let safePrompt = rawPrompt.replace(/[\r\n]+/g, " ").substring(0, 300);
+                            // Limpeza: remove quebras de linha e caracteres perigosos, limita tamanho
+                            let safePrompt = rawPrompt.replace(/[\r\n\t]/g, " ").replace(/["]/g, "").substring(0, 450);
                             
-                            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=800&height=600&model=flux&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+                            // Seed aleatória força uma nova imagem sempre que carrega
+                            const seed = Math.floor(Math.random() * 100000);
+                            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=800&height=600&model=flux&nologo=true&seed=${seed}`;
                             
                             return (
-                                <div key={i} className="my-4 border border-[#30363d] rounded-lg overflow-hidden relative group">
-                                    <div className="absolute top-2 left-2 bg-black/60 text-[10px] text-white px-2 py-1 rounded backdrop-blur font-mono border border-[#30363d]">IMAGINAÇÃO ESTÉTICA</div>
-                                    <img src={url} alt="Gerando..." className="w-full object-cover min-h-[200px] bg-[#161b22]" loading="lazy" />
+                                <div key={i} className="my-4 border border-[#30363d] rounded-lg overflow-hidden relative group bg-black min-h-[300px] flex items-center justify-center">
+                                    <div className="absolute top-2 left-2 bg-black/60 text-[10px] text-neon px-2 py-1 rounded backdrop-blur font-mono border border-[#30363d] z-10">IMAGINAÇÃO ESTÉTICA</div>
+                                    <img 
+                                        src={url} 
+                                        alt={rawPrompt} 
+                                        className="w-full object-cover transition-opacity duration-500" 
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none'; // Esconde se quebrar
+                                            e.target.parentNode.innerHTML += `<div class="p-4 text-center text-red-500 text-xs font-mono">⚠️ ERRO AO RENDERIZAR: A descrição visual é muito complexa para o link. Tente simplificar.</div>`;
+                                        }}
+                                    />
                                 </div>
                             );
                         }
 
-                        // 3. VETORES SVG
+                        // 3. VETORES E GEOMETRIA (SVG)
                         if (parte.startsWith("[[SVG:")) {
                             let svgCode = parte.replace("[[SVG:", "").replace("]]", "").trim();
                             return <div key={i} className="my-4 bg-[#161b22] p-6 rounded border border-[#30363d] flex justify-center items-center" dangerouslySetInnerHTML={{ __html: svgCode }} />;
@@ -825,7 +836,6 @@ const CONFIG = {
                     })}
                 </div>;
             };
-
 
          
             useEffect(() => {
@@ -1280,6 +1290,7 @@ ${m.texto}
     </script>
 </body>
 </html>
+
 
 
 
