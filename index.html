@@ -743,8 +743,9 @@ const CONFIG = {
             const chatRef = useRef(null);
    
 
-// --- MOTOR GRÁFICO V4.4 (COM TRATAMENTO DE ERRO DE IMAGEM) ---
      // --- MOTOR GRÁFICO V5.0 (COM LINK DE BACKUP) ---
+
+// --- MOTOR GRÁFICO V5.1 (LIMPEZA INDUSTRIAL + FOTO RÁPIDA) ---
             const renderTextoComGrafico = (texto) => {
                 if (!texto.includes("[[GRAFICO:") && !texto.includes("[[IMG:") && !texto.includes("[[SVG:")) {
                     return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
@@ -759,52 +760,54 @@ const CONFIG = {
                             try {
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
                                 const params = Object.fromEntries(conteudo.split(', ').map(s => {
-                                    const p = s.split('=');
-                                    return [p[0].trim(), p.slice(1).join('=').trim() || ""];
+                                    const parts = s.split('=');
+                                    return [parts[0].trim(), parts.slice(1).join('=').trim() || ""];
                                 }));
                                 const labels = params.labels ? params.labels.split(',').map(s=>s.trim()) : [];
-                                const vals = params.dados ? params.dados.split(',').map(s=>Number(s.trim())) : [];
+                                const data = params.dados ? params.dados.split(',').map(s=>Number(s.trim())) : [];
                                 
-                                // Tipos
-                                let t = (params.tipo || 'bar').toLowerCase();
-                                if(t.includes('pizza')) t='pie'; 
+                                // Cores fixas do OESD
+                                const colors = ['#238636','#8957e5','#d4af37', '#ffffff'];
                                 
+                                // Config simples
                                 const qc = {
-                                    type: t,
-                                    data: { labels: labels, datasets: [{ label: "Dados", data: vals, backgroundColor: ['#238636','#8957e5','#d4af37'], borderWidth:0 }] },
-                                    options: { title: { display: true, text: params.titulo || 'OESD', fontColor:'#fff' }, legend: { display: t!=='bar', labels:{fontColor:'#fff'} } }
+                                    type: (params.tipo||'bar').includes('pie') ? 'pie' : 'bar',
+                                    data: { labels: labels, datasets: [{ label: "Dados", data: data, backgroundColor: colors }] },
+                                    options: { 
+                                        legend: { display: true, labels:{fontColor:'white'} },
+                                        title: { display: true, text: params.titulo||'OESD', fontColor:'white' }
+                                    }
                                 };
-                                const u = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qc))}&bkg=transparent&w=400&h=300`;
-                                return <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d]"><img src={u} className="w-full"/></div>;
+                                const u = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qc))}&bkg=transparent&w=500&h=300`;
+                                return <div key={i} className="my-4 bg-[#0d1117] p-2 border border-[#30363d] rounded"><img src={u} className="w-full"/></div>;
                             } catch { return null; }
                         }
 
-                        // 2. FOTOS (FIX SOLICITADO)
+                        // 2. FOTOS (CORREÇÃO DE PESO)
                         if (parte.startsWith("[[IMG:")) {
                             let raw = parte.replace("[[IMG:", "").replace("]]", "").trim();
-                            // Limpeza Agressiva: Só deixa letras, números e vírgulas
-                            let clean = raw.replace(/[^a-zA-Z0-9 ,]/g, "").substring(0, 300);
                             
-                            // URL direta sem parâmetros complicados
+                            // LIMPEZA AGRESSIVA:
+                            // 1. Tira símbolos, deixa só letras/números
+                            // 2. Corta em 100 caracteres (máximo seguro)
+                            let clean = raw.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 100);
+                            
+                            // URL Direta e Rápida (Sem modelo pesado)
                             const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?nologo=true`;
                             
                             return (
                                 <div key={i} className="my-4 border border-[#30363d] rounded-lg p-1 bg-black">
-                                    <div style={{position:'relative', minHeight:'200px'}}>
-                                        <span className="absolute top-2 left-2 bg-black/80 text-[9px] text-[#238636] px-2 rounded border border-[#30363d]">IMAGINAÇÃO ESTÉTICA</span>
-                                        
+                                    <div className="relative" style={{minHeight:'200px'}}>
+                                        <div className="absolute top-2 left-2 bg-black/70 text-[9px] text-green-400 px-2 border border-green-900 rounded">IMAGINAÇÃO</div>
                                         <img 
                                             src={imgUrl} 
-                                            alt="Carregando..." 
-                                            style={{width:'100%', display:'block', minHeight:'200px', objectFit:'cover'}}
+                                            className="w-full object-cover rounded" 
+                                            loading="lazy" 
+                                            style={{minHeight:'200px', backgroundColor:'#111'}}
                                         />
                                     </div>
-                                    
-                                    {/* Link de Segurança - Caso a imagem quebre */}
-                                    <div className="text-center p-2 border-t border-[#30363d] mt-1">
-                                        <a href={imgUrl} target="_blank" className="text-[10px] text-blue-400 hover:text-white underline">
-                                            [ABRIR IMAGEM EM NOVA GUIA]
-                                        </a>
+                                    <div className="text-center p-2 border-t border-[#30363d]">
+                                        <a href={imgUrl} target="_blank" className="text-[10px] text-blue-400 underline">ABRIR IMAGEM (LINK DIRETO)</a>
                                     </div>
                                 </div>
                             );
@@ -819,6 +822,7 @@ const CONFIG = {
                     })}
                 </div>;
             };
+
          
             useEffect(() => {
                 if (chatRef.current) {
