@@ -558,7 +558,10 @@ const CONFIG = {
                         body: JSON.stringify({
                             model: "llama-3.3-70b-versatile",
                             messages: [
-                                { role: "system", content: "Você é o Tutor OESD. Responda com Rigor e Imaginação. PARA CRIAR GRÁFICOS: Não desenhe com texto. Use estritamente este formato: [[GRAFICO: tipo=bar|pie|line, labels=Item1,Item2, dados=10,20, titulo=Seu Titulo]]. Exemplo: [[GRAFICO: tipo=pie, labels=Aprovado,Reprovado, dados=80,20, titulo=Resultados]]." },
+                                
+{ role: "system", content: "Você é o Tutor OESD. Responda com Rigor e Imaginação. CAPACIDADES GRÁFICAS ATIVAS: 1. Para gráficos de dados, use: [[GRAFICO: tipo=bar|pie, labels=A,B, dados=10,20, titulo=X]]. 2. Para gerar FOTOS REAIS ou ARTES, use: [[IMG: descreva a cena em ingles detalhado]]. 3. Para desenhar FORMAS, GEOMETRIA ou VETORES, escreva o código SVG puro dentro de: [[SVG: <svg...>...</svg>]]. Não explique o código, apenas mostre o visual." },
+
+
                                 { role: "user", content: userMessage }
                             ]
                         })
@@ -741,44 +744,48 @@ const CONFIG = {
    // --- RENDERIZADOR DE GRÁFICOS INTELIGENTE ---
   
 // --- RENDERIZADOR DE GRÁFICOS INTELIGENTE (V3 - DADOS NUMÉRICOS REAIS) ---
-            const renderTextoComGrafico = (texto) => {
-                if (!texto.includes("[[GRAFICO:")) return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
+            
 
-                const partes = texto.split(/(\[\[GRAFICO:.*?\]\])/g);
+// --- MOTOR GRÁFICO V4.0 (Charts, SVG, Imagens Reais) ---
+            const renderTextoComGrafico = (texto) => {
+                // Se não tem tags especiais, devolve texto puro
+                if (!texto.includes("[[GRAFICO:") && !texto.includes("[[IMG:") && !texto.includes("[[SVG:")) {
+                    return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
+                }
+
+                // Quebra o texto nas tags especiais
+                const partes = texto.split(/(\[\[(?:GRAFICO|IMG|SVG):.*?\]\])/gs);
                 
                 return <div className="whitespace-pre-wrap font-sans">
                     {partes.map((parte, i) => {
+                        // 1. RENDERIZADOR DE GRÁFICOS (QuickChart)
                         if (parte.startsWith("[[GRAFICO:")) {
                             try {
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
-                                // Separador seguro que lida com espaços da IA
                                 const params = Object.fromEntries(conteudo.split(', ').map(s => {
                                     const [k, v] = s.split('=');
                                     return [k, v || ""];
                                 }));
                                 
-                                // CORREÇÃO FATAL: LIMPAR ESPAÇOS E TRANSFORMAR EM NÚMEROS
                                 const labels = params.labels ? params.labels.split(',').map(s => s.trim()) : [];
                                 const dataValues = params.dados ? params.dados.split(',').map(s => Number(s.trim())) : [];
-                                
                                 const type = params.tipo || 'bar';
                                 const title = params.titulo || 'Análise OESD';
 
-                                // Configuração para o QuickChart
                                 const qcConfig = {
                                     type: type,
                                     data: {
                                         labels: labels,
                                         datasets: [{
                                             label: "Dados",
-                                            data: dataValues, // Agora envia Números (70, 30) e não Textos ("70", "30")
+                                            data: dataValues,
                                             backgroundColor: ['#238636', '#8957e5', '#d4af37', '#ef4444', '#3b82f6', '#ffffff'],
                                             borderColor: '#0d1117',
                                             borderWidth: 2
                                         }]
                                     },
                                     options: {
-                                        legend: { display: (type === 'pie' || type === 'doughnut'), labels: { fontColor: '#fff' } },
+                                        legend: { display: true, labels: { fontColor: '#fff' } },
                                         title: { display: true, text: title, fontColor: '#fff', fontSize: 16 },
                                         scales: {
                                             yAxes: type === 'bar' ? [{ ticks: { fontColor: '#fff', beginAtZero: true }, gridLines: { color: '#30363d' } }] : [],
@@ -786,20 +793,42 @@ const CONFIG = {
                                         }
                                     }
                                 };
-                                
                                 const url = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qcConfig))}&bkg=transparent&width=500&height=300&devicePixelRatio=1.0`;
-                                
-                                return (
-                                    <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d] shadow-lg flex justify-center">
-                                        <img src={url} alt="Gráfico" className="rounded max-w-full h-auto" />
-                                    </div>
-                                );
-                            } catch (e) { return <span key={i} className="text-red-500 text-xs">[Erro Visualização]</span>; }
+                                return <div key={i} className="my-4 bg-[#0d1117] p-2 rounded border border-[#30363d]"><img src={url} alt="Gráfico" className="w-full rounded"/></div>;
+                            } catch (e) { return null; }
                         }
+
+                        // 2. RENDERIZADOR DE IMAGEM REAL (Pollinations AI)
+                        if (parte.startsWith("[[IMG:")) {
+                            const prompt = parte.replace("[[IMG:", "").replace("]]", "").trim();
+                            // Usa API gratuita que não exige chave
+                            const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=600&model=flux&nologo=true`;
+                            return (
+                                <div key={i} className="my-4 border border-[#30363d] rounded-lg overflow-hidden relative group">
+                                    <div className="absolute top-2 left-2 bg-black/50 text-[10px] text-white px-2 py-1 rounded">GERADO POR IA</div>
+                                    <img src={url} alt={prompt} className="w-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
+                                    <p className="text-[10px] text-gray-500 p-2 italic bg-[#0d1117]">Prompt: {prompt}</p>
+                                </div>
+                            );
+                        }
+
+                        // 3. RENDERIZADOR VETORIAL (SVG Direto)
+                        if (parte.startsWith("[[SVG:")) {
+                            // A IA deve enviar o código SVG cru dentro da tag
+                            let svgCode = parte.replace("[[SVG:", "").replace("]]", "").trim();
+                            // Limpeza de segurança básica
+                            if(!svgCode.includes("<svg")) return <span className="text-red-500 text-xs">Erro SVG</span>;
+                            
+                            return (
+                                <div key={i} className="my-4 bg-white/5 p-4 rounded border border-[#30363d] flex justify-center" 
+                                     dangerouslySetInnerHTML={{ __html: svgCode }} />
+                            );
+                        }
+
                         return <span key={i}>{parte}</span>;
                     })}
                 </div>;
-            };          
+            };      
 
          
             useEffect(() => {
@@ -1254,4 +1283,5 @@ ${m.texto}
     </script>
 </body>
 </html>
+
 
