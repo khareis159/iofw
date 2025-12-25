@@ -743,10 +743,12 @@ const CONFIG = {
             const chatRef = useRef(null);
    
 
-     // --- MOTOR GRÁFICO V5.0 (COM LINK DE BACKUP) ---
-
 // --- MOTOR GRÁFICO V5.1 (LIMPEZA INDUSTRIAL + FOTO RÁPIDA) ---
+           
+
+// --- MOTOR GRÁFICO V5.2 (COM SISTEMA DE ESTEPE / BACKUP) ---
             const renderTextoComGrafico = (texto) => {
+                // Se não tem tags especiais, devolve texto puro
                 if (!texto.includes("[[GRAFICO:") && !texto.includes("[[IMG:") && !texto.includes("[[SVG:")) {
                     return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
                 }
@@ -755,59 +757,66 @@ const CONFIG = {
                 
                 return <div className="whitespace-pre-wrap font-sans">
                     {partes.map((parte, i) => {
-                        // 1. GRÁFICOS
+                        // 1. GRÁFICOS (Estatísticas)
                         if (parte.startsWith("[[GRAFICO:")) {
                             try {
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
                                 const params = Object.fromEntries(conteudo.split(', ').map(s => {
-                                    const parts = s.split('=');
-                                    return [parts[0].trim(), parts.slice(1).join('=').trim() || ""];
+                                    const p = s.split('=');
+                                    return [p[0].trim(), p.slice(1).join('=').trim() || ""];
                                 }));
                                 const labels = params.labels ? params.labels.split(',').map(s=>s.trim()) : [];
                                 const data = params.dados ? params.dados.split(',').map(s=>Number(s.trim())) : [];
                                 
-                                // Cores fixas do OESD
                                 const colors = ['#238636','#8957e5','#d4af37', '#ffffff'];
+                                const type = (params.tipo||'bar').includes('pie') ? 'pie' : 'bar';
                                 
-                                // Config simples
                                 const qc = {
-                                    type: (params.tipo||'bar').includes('pie') ? 'pie' : 'bar',
-                                    data: { labels: labels, datasets: [{ label: "Dados", data: data, backgroundColor: colors }] },
-                                    options: { 
-                                        legend: { display: true, labels:{fontColor:'white'} },
-                                        title: { display: true, text: params.titulo||'OESD', fontColor:'white' }
-                                    }
+                                    type: type,
+                                    data: { labels: labels, datasets: [{ label: "Valor", data: data, backgroundColor: colors }] },
+                                    options: { legend: { display: true, labels:{fontColor:'white'} }, title: { display: true, text: params.titulo||'OESD', fontColor:'white' } }
                                 };
                                 const u = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(qc))}&bkg=transparent&w=500&h=300`;
                                 return <div key={i} className="my-4 bg-[#0d1117] p-2 border border-[#30363d] rounded"><img src={u} className="w-full"/></div>;
                             } catch { return null; }
                         }
 
-                        // 2. FOTOS (CORREÇÃO DE PESO)
+                        // 2. FOTOS (COM ESTEPE DE SEGURANÇA)
                         if (parte.startsWith("[[IMG:")) {
                             let raw = parte.replace("[[IMG:", "").replace("]]", "").trim();
+                            // Limpa caracteres especiais
+                            let clean = raw.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 200);
                             
-                            // LIMPEZA AGRESSIVA:
-                            // 1. Tira símbolos, deixa só letras/números
-                            // 2. Corta em 100 caracteres (máximo seguro)
-                            let clean = raw.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 100);
+                            // 1. Tenta criar com IA
+                            const iaUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?nologo=true&seed=${Math.floor(Math.random()*999)}`;
                             
-                            // URL Direta e Rápida (Sem modelo pesado)
-                            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?nologo=true`;
-                            
+                            // 2. Imagem de Backup (Abstrata/Tecnológica) se a IA falhar
+                            const backupUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80"; 
+
                             return (
                                 <div key={i} className="my-4 border border-[#30363d] rounded-lg p-1 bg-black">
                                     <div className="relative" style={{minHeight:'200px'}}>
-                                        <div className="absolute top-2 left-2 bg-black/70 text-[9px] text-green-400 px-2 border border-green-900 rounded">IMAGINAÇÃO</div>
+                                        <div className="absolute top-2 left-2 bg-black/70 text-[9px] text-green-400 px-2 border border-green-900 rounded z-10">IMAGINAÇÃO ESTÉTICA</div>
+                                        
                                         <img 
-                                            src={imgUrl} 
-                                            className="w-full object-cover rounded" 
-                                            loading="lazy" 
+                                            src={iaUrl} 
+                                            alt="Gerando..." 
+                                            className="w-full object-cover rounded"
                                             style={{minHeight:'200px', backgroundColor:'#111'}}
+                                            onError={(e) => {
+                                                // SE DER ERRO (429 Too Many Requests), CARREGA O BACKUP AUTOMATICAMENTE
+                                                if(e.target.src !== backupUrl) {
+                                                    e.target.src = backupUrl;
+                                                    e.target.nextSibling.innerText = "IA Ocupada (Fila cheia) - Exibindo imagem de acervo.";
+                                                }
+                                            }}
                                         />
+                                        <div className="text-[9px] text-gray-500 mt-1 text-center font-mono">
+                                            IA Generator Output
+                                        </div>
                                     </div>
-                                    <div className="text-center p-2 border-t border-[#30363d]">
-                                        <a href={imgUrl} target="_blank" className="text-[10px] text-blue-400 underline">ABRIR IMAGEM (LINK DIRETO)</a>
+                                    <div className="text-center p-2 border-t border-[#30363d] mt-1">
+                                        <a href={iaUrl} target="_blank" className="text-[10px] text-blue-400 underline">ABRIR ORIGINAL (LINK)</a>
                                     </div>
                                 </div>
                             );
@@ -821,9 +830,7 @@ const CONFIG = {
                         return <span key={i}>{parte}</span>;
                     })}
                 </div>;
-            };
-
-         
+            };         
             useEffect(() => {
                 if (chatRef.current) {
                     chatRef.current.scrollTo({
@@ -1276,7 +1283,6 @@ ${m.texto}
     </script>
 </body>
 </html>
-
 
 
 
