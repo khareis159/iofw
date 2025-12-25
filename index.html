@@ -1010,10 +1010,17 @@ const CONFIG = {
                         </button>
                         
                         {/* Contador de Visitas */}
-                        <div className="text-center pt-4 text-[10px] text-[#238636] mono">
-                            <i className="fas fa-users mr-1"></i>
-                            {visits.toLocaleString('pt-BR')} Online
-                        </div>
+ {/* RODAPÉ COM COPYRIGHT E CONTADOR */}
+                        <div className="mt-8 pt-6 border-t border-[#30363d] text-center">
+                            <p className="text-[9px] text-gray-600 font-mono mb-2 tracking-widest uppercase">
+                                © 2026 Carlos Alberto Reis
+                            </p>
+                            <div className="text-[10px] text-[#238636] font-mono flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                                <i className="fas fa-circle text-[6px] animate-pulse"></i> 
+                                {visits.toLocaleString('pt-BR')} PIONEIROS ONLINE
+                            </div>
+                        </div>                       
+
                     </div>
                 </aside>
             );
