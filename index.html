@@ -1,4 +1,748 @@
-// --- MOTOR GRÁFICO V4.3 (FIX IMAGENS QUEBRADAS) ---
+<!-- 
+    COPYRIGHT: © 2026 Carlos Alberto Reis 
+    PROJECT: IOFW v3.2 - Faculdade Simbiótica HyperWeb3 
+    VERSION: 3.2 (Full Production - Blueprint Completo)
+    STATUS: Sistema Integrado Completo com Biblioteca
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOFW v3.2 | Sistema Integrado de Tutoria OESD</title>
+    
+    <!-- Meta Tags SEO -->
+    <meta name="description" content="Sistema de tutoria acadêmica com gamificação AVC, memória persistente e biblioteca digital integrada">
+    <meta name="author" content="Carlos Alberto Reis">
+    <meta name="keywords" content="OESD, tutoria, gamificação, AVC, educação, IA, biblioteca digital">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="IOFW v3.2 - Sistema Integrado de Tutoria OESD">
+    <meta property="og:description" content="Faculdade Simbiótica com gamificação AVC e biblioteca integrada">
+    <meta property="og:url" content="https://khareis159.github.io/iofw/">
+    
+    <!-- React Core -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- UI & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Fontes Acadêmicas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === DESIGN SYSTEM CYBER-ACADEMIC === */
+        :root {
+            --bg-primary: #010409;
+            --bg-secondary: #0d1117;
+            --bg-tertiary: #161b22;
+            --border-primary: #30363d;
+            --border-hover: #238636;
+            --accent-green: #238636;
+            --accent-green-hover: #2ea043;
+            --accent-purple: #8957e5;
+            --accent-blue: #1f6feb;
+            --accent-gold: #d4af37;
+            --text-primary: #ffffff;
+            --text-secondary: #c9d1d9;
+            --text-muted: #8b949e;
+            --text-error: #ef4444;
+            --shadow-glow: 0 0 15px rgba(35, 134, 54, 0.1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            overflow: hidden;
+            margin: 0;
+        }
+        
+        .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+        
+        /* === COMPONENTES BASE === */
+        .card-oesd {
+            border: 1px solid var(--border-primary);
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-oesd:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+        
+        /* === STATS BARS === */
+        .stats-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-tertiary);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .stats-fill {
+            height: 100%;
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* === MEDALHAS === */
+        .medal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            animation: medalPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes medalPop {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        .medal-realista { background: rgba(35, 134, 54, 0.15); color: #238636; border: 1px solid #238636; }
+        .medal-esteta { background: rgba(137, 87, 229, 0.15); color: #8957e5; border: 1px solid #8957e5; }
+        .medal-mestre { background: rgba(212, 175, 55, 0.15); color: #d4af37; border: 1px solid #d4af37; }
+        
+        /* === CHAT === */
+        .chat-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-green) var(--bg-secondary);
+        }
+        
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        .chat-scroll::-webkit-scrollbar-thumb { 
+            background: var(--accent-green); 
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent-green-hover); }
+        
+        /* === BACKGROUND GRID === */
+        .bg-grid {
+            background-image: 
+                linear-gradient(to right, rgba(48, 54, 61, 0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(48, 54, 61, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+        }
+        
+        /* === ANIMAÇÕES === */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse-slow 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* === LOADING OVERLAY === */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(1, 4, 9, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-primary);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* === BUTTONS === */
+        .btn-primary {
+            background: var(--accent-green);
+            color: var(--text-primary);
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-green-hover);
+            box-shadow: 0 0 20px rgba(35, 134, 54, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-primary);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--text-muted);
+            color: var(--text-secondary);
+        }
+        
+        /* === ERROR TRAP === */
+        #error-trap {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: #1a0000;
+            border-bottom: 2px solid var(--text-error);
+            color: var(--text-error);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .stats-bar { height: 4px; }
+            .medal-badge { font-size: 9px; padding: 4px 8px; }
+        }
+        
+        /* === TOOLTIPS === */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+        
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        [data-tooltip]:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- === ERROR HANDLER === -->
+    <div id="error-trap"></div>
+    
+    <!-- === ROOT CONTAINER === -->
+    <div id="root"></div>
+
+    <!-- === CRASH PROTECTION === -->
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            const trap = document.getElementById('error-trap');
+            trap.style.display = 'block';
+            trap.innerHTML = `
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <strong style="font-size: 16px;">⚠️ FALHA CRÍTICA NO SISTEMA IOFW</strong>
+                    <div style="margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 4px;">
+                        <strong>Erro:</strong> ${msg}<br>
+                        <small style="opacity: 0.7;">${url} : linha ${line}</small>
+                    </div>
+                    <button onclick="localStorage.clear();sessionStorage.clear();location.reload()" 
+                            style="background:#238636;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-weight:700;margin-top:10px;">
+                        🔄 LIMPAR MEMÓRIA E REINICIAR
+                    </button>
+                </div>
+            `;
+            return false;
+        };
+    </script>
+
+    <!-- === MAIN APPLICATION === -->
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        // ============================================
+        // === CONFIGURAÇÃO E CONSTANTES ===
+        // ============================================
+        
+const CONFIG = {
+            DATABASE_URL: "https://khareisbook-default-rtdb.firebaseio.com/",
+            OESD_MASK: "Z3NrX3dJR3FPN04wQVNxbXFyWlBLZTFpV0dkeWIzRllIUG9ndmh6N0ZhWndrbnZzODlvenJYelM=", 
+            BIBLIOTECA_URL: "https://khareis159.github.io/khareisbook/",
+            LIMITES: { STAT_MAX: 100, STAT_INCREMENT: 2, STAT_MIN: 10 },
+            MEDALHAS: {
+                REALISTA: { threshold: 15, label: "Realista", icon: "🎯", color: "realista" },
+                ESTETA: { threshold: 15, label: "Esteta", icon: "🎨", color: "esteta" },
+                MESTRE_OESD: { threshold: 50, label: "Mestre OESD", icon: "⚡", color: "mestre" }
+            }
+        };
+
+
+        // ============================================
+        // === UTILITÁRIOS ===
+        // ============================================
+        
+        const Utils = {
+            wrapText: (ctx, text, x, y, maxWidth, lineHeight) => {
+                const words = text.split(' ');
+                let line = '';
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    if (metrics.width > maxWidth && n > 0) {
+                        ctx.fillText(line, x, y);
+                        line = words[n] + ' ';
+                        y += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                ctx.fillText(line, x, y);
+            },
+            
+            formatTimestamp: (ts) => {
+                const date = new Date(ts);
+                return date.toLocaleString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            },
+            
+            sanitizeInput: (str) => {
+                return str.trim().slice(0, 500);
+            },
+            
+            generateID: () => {
+                return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+        };
+
+        // ============================================
+        // === SERVIÇO DE CAPA AUTOMÁTICA ===
+        // ============================================
+        
+        const CapaService = {
+            gerar: (titulo, autor, stats) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                
+                // Gradiente de fundo
+                const gradient = ctx.createLinearGradient(0, 0, 0, 600);
+                gradient.addColorStop(0, "#010409");
+                gradient.addColorStop(0.5, "#0d1117");
+                gradient.addColorStop(1, "#161b22");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 400, 600);
+                
+                // Grid decorativo
+                ctx.strokeStyle = "rgba(48, 54, 61, 0.3)";
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 400; i += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i, 600);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < 600; i += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, i);
+                    ctx.lineTo(400, i);
+                    ctx.stroke();
+                }
+                
+                // Borda principal
+                ctx.strokeStyle = "#238636";
+                ctx.lineWidth = 8;
+                ctx.strokeRect(20, 20, 360, 560);
+                
+                // Título
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.font = "bold 32px 'Space Grotesk', sans-serif";
+                Utils.wrapText(ctx, titulo.toUpperCase(), 200, 150, 320, 40);
+                
+                // Stats visuais
+                ctx.fillStyle = "#8b949e";
+                ctx.font = "14px 'JetBrains Mono', monospace";
+                ctx.fillText(`RIGOR: ${stats.rigor}%`, 200, 350);
+                ctx.fillText(`IMAGINAÇÃO: ${stats.imaginacao}%`, 200, 375);
+                ctx.fillText(`SIMBIOSE: ${stats.simbiose}%`, 200, 400);
+                
+                // Instituição
+                ctx.fillStyle = "#238636";
+                ctx.font = "bold 20px 'Space Grotesk', sans-serif";
+                ctx.fillText("FACULDADE ÍNTEGRA", 200, 470);
+                
+                // Autor
+                ctx.fillStyle = "#d4af37";
+                ctx.font = "italic 16px serif";
+                ctx.fillText(`Pioneiro: ${autor}`, 200, 520);
+                
+                // Selo OESD
+                ctx.strokeStyle = "#238636";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(200, 540, 25, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = "#238636";
+                ctx.font = "bold 10px monospace";
+                ctx.fillText("OESD", 200, 545);
+                
+                return canvas.toDataURL("image/jpeg", 0.85);
+            }
+        };
+
+        // ============================================
+        // === SERVIÇO FIREBASE ===
+        // ============================================
+        
+        const FirebaseService = {
+            async saveStats(userId, stats) {
+                const url = `${CONFIG.DATABASE_URL}pioneiros/${userId}/stats.json`;
+                await fetch(url, { 
+                    method: 'PUT', 
+                    body: JSON.stringify(stats) 
+                });
+            },
+            
+            async loadStats(userId) {
+                const url = `${CONFIG.DATABASE_URL}pioneiros/${userId}/stats.json`;
+                const response = await fetch(url);
+                const data = await response.json();
+                return data && typeof data.rigor === 'number' ? data : {
+                    rigor: CONFIG.LIMITES.STAT_MIN,
+                    imaginacao: CONFIG.LIMITES.STAT_MIN,
+                    simbiose: CONFIG.LIMITES.STAT_MIN
+                };
+            },
+            
+            async saveMessage(userId, message) {
+                const url = `${CONFIG.DATABASE_URL}pioneiros/${userId}/historico.json`;
+                await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(message)
+                });
+            },
+            
+            async loadHistory(userId) {
+                const url = `${CONFIG.DATABASE_URL}pioneiros/${userId}/historico.json`;
+                const response = await fetch(url);
+                const data = await response.json();
+                return data ? Object.values(data) : [];
+            },
+            
+            async publishToLibrary(payload) {
+                const url = `${CONFIG.DATABASE_URL}shelf.json`;
+                await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+            },
+            
+            async updateVisitCount() {
+                const url = `${CONFIG.DATABASE_URL}contador_v2.json`;
+                try {
+                    const response = await fetch(url);
+                    let count = await response.json();
+                    count = (!count || isNaN(count)) ? 1000 : Number(count);
+                    
+                    if (!sessionStorage.getItem('kb_sync_v2')) {
+                        count++;
+                        await fetch(url, { method: 'PUT', body: String(count) });
+                        sessionStorage.setItem('kb_sync_v2', 'true');
+                    }
+                    return count;
+                } catch {
+                    return 1000;
+                }
+            }
+        };
+
+        // ============================================
+        // === SERVIÇO DE TUTORIA (GROQ) ===
+        // ============================================
+        
+   const TutorService = {
+          async ask(userMessage, history = []) {
+                try {
+                    // 1. Decodifica e limpa qualquer espaço invisível
+                    const rawMask = CONFIG.OESD_MASK.replace(/\s/g, ''); 
+                    const chaveReal = atob(rawMask).trim();
+
+                    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${chaveReal}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: "llama-3.3-70b-versatile",
+                            messages: [
+                                
+{ role: "system", content: "Você é o Tutor OESD. Responda com Rigor e Imaginação. CAPACIDADES GRÁFICAS ATIVAS: 1. Para gráficos de dados, use: [[GRAFICO: tipo=bar|pie, labels=A,B, dados=10,20, titulo=X]]. 2. Para gerar FOTOS REAIS ou ARTES, use: [[IMG: descreva a cena em ingles detalhado]]. 3. Para desenhar FORMAS, GEOMETRIA ou VETORES, escreva o código SVG puro dentro de: [[SVG: <svg...>...</svg>]]. Não explique o código, apenas mostre o visual." },
+
+
+                                { role: "user", content: userMessage }
+                            ]
+                        })
+                    });
+                    
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        // Se der erro 401 aqui, a chave foi cancelada pela Groq
+                        const msgErro = data.error?.message || `Erro ${response.status}`;
+                        throw new Error(`Groq diz: ${msgErro}`);
+                    }
+                    
+                    return data.choices[0].message.content;
+                } catch (error) {
+                    console.error("ERRO DETALHADO IA:", error);
+                    throw error;
+                }
+            } 
+        };
+
+        // ============================================
+        // === LÓGICA DE MEDALHAS ===
+        // ============================================
+        
+        const MedalService = {
+            calcular(stats) {
+                const medalhas = [];
+                
+                if (stats.rigor >= CONFIG.MEDALHAS.REALISTA.threshold) {
+                    medalhas.push(CONFIG.MEDALHAS.REALISTA);
+                }
+                if (stats.imaginacao >= CONFIG.MEDALHAS.ESTETA.threshold) {
+                    medalhas.push(CONFIG.MEDALHAS.ESTETA);
+                }
+                if (stats.simbiose >= CONFIG.MEDALHAS.MESTRE_OESD.threshold) {
+                    medalhas.push(CONFIG.MEDALHAS.MESTRE_OESD);
+                }
+                
+                return medalhas;
+            }
+        };
+
+        // ============================================
+        // === COMPONENTE: TELA DE LOGIN ===
+        // ============================================
+        
+        function LoginScreen({ onLogin }) {
+            const [nome, setNome] = useState("");
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (nome.trim()) {
+                    onLogin(nome.trim());
+                }
+            };
+            
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-[#010409] p-4">
+                    <div className="card-oesd p-10 max-w-md w-full text-center animate-float">
+                        <div className="mb-8">
+                            <h1 className="text-4xl font-bold mb-3 text-[#238636] mono">IOFW</h1>
+                            <h2 className="text-xl font-semibold text-white mb-2">Sistema OESD</h2>
+                            <p className="text-sm text-[#8b949e] uppercase tracking-wider">Faculdade Íntegra</p>
+                        </div>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <input
+                                    type="text"
+                                    value={nome}
+                                    onChange={(e) => setNome(e.target.value)}
+                                    className="w-full bg-[#010409] border border-[#30363d] p-4 rounded-lg text-white text-center outline-none focus:border-[#238636] transition-all mono"
+                                    placeholder="IDENTIFICAÇÃO"
+                                    maxLength="50"
+                                    autoFocus
+                                />
+                            </div>
+                            
+                            <button
+                                type="submit"
+                                className="btn-primary w-full py-4"
+                                disabled={!nome.trim()}
+                            >
+                                <i className="fas fa-rocket mr-2"></i>
+                                INICIAR JORNADA
+                            </button>
+                        </form>
+                        
+                        <div className="mt-8 pt-6 border-t border-[#30363d]">
+                            <p className="text-xs text-[#8b949e]">
+                                <i className="fas fa-shield-alt mr-1"></i>
+                                Sistema com memória persistente e gamificação AVC
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ============================================
+        // === COMPONENTE: PAINEL DE STATS ===
+        // ============================================
+        
+        function StatsPanel({ stats }) {
+            return (
+                <div className="space-y-5">
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider">Rigor</span>
+                            <span className="text-sm font-mono text-[#238636]">{stats.rigor}%</span>
+                        </div>
+                        <div className="stats-bar">
+                            <div 
+                                className="stats-fill bg-[#238636]" 
+                                style={{ width: `${stats.rigor}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider">Imaginação</span>
+                            <span className="text-sm font-mono text-[#8957e5]">{stats.imaginacao}%</span>
+                        </div>
+                        <div className="stats-bar">
+                            <div 
+                                className="stats-fill bg-[#8957e5]" 
+                                style={{ width: `${stats.imaginacao}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                    
+                    <div className="text-center pt-5 border-t border-[#30363d]">
+                        <span className="text-xs uppercase block mb-2 text-[#8b949e] tracking-wider">Simbiose</span>
+                        <div className="text-4xl font-bold text-white mono animate-pulse-slow">
+                            {stats.simbiose}%
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ============================================
+        // === COMPONENTE: MURAL DE MEDALHAS ===
+        // ============================================
+        
+        function MedalWall({ medals }) {
+            if (medals.length === 0) {
+                return (
+                    <div className="text-center py-6 text-[#8b949e] text-xs">
+                        <i className="fas fa-trophy mb-2 text-2xl opacity-30"></i>
+                        <p>Continue evoluindo para desbloquear medalhas</p>
+                    </div>
+                );
+            }
+            
+            return (
+                <div className="space-y-2">
+                    {medals.map((medal, idx) => (
+                        <div 
+                            key={idx} 
+                            className={`medal-badge medal-${medal.color}`}
+                            data-tooltip={`Conquistada por ${medal.label}`}
+                        >
+                            <span>{medal.icon}</span>
+                            <span>{medal.label}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        // ============================================
+        // === COMPONENTE: JANELA DE CHAT ===
+        // ============================================
+        
+        function ChatWindow({ messages, loading }) {
+            const chatRef = useRef(null);
+   
+// --- MOTOR GRÁFICO V4.3 (CORRIGIDO) ---
             const renderTextoComGrafico = (texto) => {
                 if (!texto.includes("[[GRAFICO:") && !texto.includes("[[IMG:") && !texto.includes("[[SVG:")) {
                     return <div className="whitespace-pre-wrap font-sans">{texto}</div>;
@@ -8,7 +752,7 @@
                 
                 return <div className="whitespace-pre-wrap font-sans">
                     {partes.map((parte, i) => {
-                        // 1. GRÁFICOS
+                        // 1. GRÁFICOS (Chart.js via QuickChart)
                         if (parte.startsWith("[[GRAFICO:")) {
                             try {
                                 const conteudo = parte.replace("[[GRAFICO:", "").replace("]]", "");
@@ -19,17 +763,22 @@
                                 
                                 const labels = params.labels ? params.labels.split(',').map(s => s.trim()) : [];
                                 const dataValues = params.dados ? params.dados.split(',').map(s => Number(s.trim())) : [];
+                                
+                                // TRADUTOR DE TIPOS (Pizza, Rosca, etc)
                                 let chartType = (params.tipo || 'bar').toLowerCase();
                                 if (['pizza', 'torta'].includes(chartType)) chartType = 'pie';
                                 if (['rosca', 'anel'].includes(chartType)) chartType = 'doughnut';
                                 if (['linha', 'linhas'].includes(chartType)) chartType = 'line';
+                                if (['barra', 'barras'].includes(chartType)) chartType = 'bar';
                                 
+                                const title = params.titulo || 'Análise OESD';
+
                                 const qcConfig = {
                                     type: chartType,
                                     data: {
                                         labels: labels,
                                         datasets: [{
-                                            label: "Dados",
+                                            label: "Valor",
                                             data: dataValues,
                                             backgroundColor: ['#238636', '#8957e5', '#d4af37', '#ef4444', '#3b82f6', '#ffffff'],
                                             borderColor: '#0d1117',
@@ -38,7 +787,7 @@
                                     },
                                     options: {
                                         legend: { display: (chartType !== 'bar'), labels: { fontColor: '#fff' } },
-                                        title: { display: true, text: params.titulo || 'OESD Analytics', fontColor: '#fff' },
+                                        title: { display: true, text: title, fontColor: '#fff', fontSize: 16 },
                                         scales: {
                                             yAxes: (chartType === 'bar' || chartType === 'line') ? [{ ticks: { fontColor: '#fff', beginAtZero: true }, gridLines: { color: '#30363d' } }] : [],
                                             xAxes: (chartType === 'bar' || chartType === 'line') ? [{ ticks: { fontColor: '#fff' }, gridLines: { color: '#30363d' } }] : []
@@ -50,19 +799,17 @@
                             } catch (e) { return null; }
                         }
 
-                        // 2. FOTOS REAIS (Com Proteção de Link)
+                        // 2. FOTOS REAIS (Com Proteção de Link Longo)
                         if (parte.startsWith("[[IMG:")) {
                             let rawPrompt = parte.replace("[[IMG:", "").replace("]]", "").trim();
-                            
-                            // LIMPEZA CRÍTICA PARA NÃO QUEBRAR
-                            // Remove quebras de linha e limita a 300 caracteres para a URL não estourar
+                            // TRUNCAR TEXTO PARA NÃO QUEBRAR URL
                             let safePrompt = rawPrompt.replace(/[\r\n]+/g, " ").substring(0, 300);
                             
                             const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=800&height=600&model=flux&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
                             
                             return (
                                 <div key={i} className="my-4 border border-[#30363d] rounded-lg overflow-hidden relative group">
-                                    <div className="absolute top-2 left-2 bg-black/60 text-[10px] text-neon px-2 py-1 rounded backdrop-blur font-mono border border-[#30363d]">IMAGINAÇÃO ESTÉTICA</div>
+                                    <div className="absolute top-2 left-2 bg-black/60 text-[10px] text-white px-2 py-1 rounded backdrop-blur font-mono border border-[#30363d]">IMAGINAÇÃO ESTÉTICA</div>
                                     <img src={url} alt="Gerando..." className="w-full object-cover min-h-[200px] bg-[#161b22]" loading="lazy" />
                                 </div>
                             );
@@ -78,6 +825,462 @@
                     })}
                 </div>;
             };
+
+
+         
+            useEffect(() => {
+                if (chatRef.current) {
+                    chatRef.current.scrollTo({
+                        top: chatRef.current.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            }, [messages]);
+            
+            return (
+                <div ref={chatRef} className="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll bg-grid">
+                    {messages.length === 0 ? (
+                        <div className="flex items-center justify-center h-full">
+                            <div className="text-center text-[#8b949e]">
+                                <i className="fas fa-comments text-5xl mb-4 opacity-20"></i>
+                                <p className="text-sm">Inicie uma conversa com o Tutor OESD</p>
+                            </div>
+                        </div>
+                    ) : (
+                        messages.map((m, i) => (
+                            <div 
+                                key={i} 
+                                className={`flex ${m.autor === 'Tutor' ? 'justify-start' : 'justify-end'}`}
+                            >
+                                <div className={`max-w-[85%] p-4 rounded-lg text-sm border transition-all hover:scale-[1.02] ${
+                                    m.autor === 'Tutor' 
+                                        ? 'bg-[#161b22] border-[#30363d]' 
+                                        : 'bg-[#23863615] border-[#23863640]'
+                                }`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">
+                                            {m.autor === 'Tutor' ? '🎓' : '👤'} {m.autor}
+                                        </span>
+                                        {m.timestamp && (
+                                            <span className="text-[9px] opacity-30 mono">
+                                                {Utils.formatTimestamp(m.timestamp)}
+                                            </span>
+                                        )}
+                                    </div>
+                          {renderTextoComGrafico(m.texto)}                                  
+                                </div>
+                            </div>
+                        ))
+                    )}
+                    
+                    {loading && (
+                        <div className="flex justify-center">
+                            <div className="text-center text-[#238636] py-4">
+                                <div className="spinner mx-auto mb-2"></div>
+                                <p className="text-xs mono animate-pulse-slow">Tutor processando...</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // ============================================
+        // === COMPONENTE: INPUT DE CHAT ===
+        // ============================================
+        
+        function ChatInput({ onSend, loading, disabled }) {
+            const [input, setInput] = useState("");
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (input.trim() && !loading && !disabled) {
+                    onSend(Utils.sanitizeInput(input));
+                    setInput("");
+                }
+            };
+            
+            return (
+                <form onSubmit={handleSubmit} className="p-4 border-t border-[#30363d] bg-[#0d1117] flex gap-3">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        className="flex-1 bg-[#010409] border border-[#30363d] rounded-lg p-3 text-white outline-none focus:border-[#238636] transition-all"
+                        placeholder="Digite sua mensagem..."
+                        disabled={loading || disabled}
+                        maxLength="500"
+                    />
+                    <button
+                        type="submit"
+                        className="btn-primary px-8"
+                        disabled={loading || !input.trim() || disabled}
+                    >
+                        <i className="fas fa-paper-plane mr-2"></i>
+                        ENVIAR
+                    </button>
+                </form>
+            );
+        }
+
+        // ============================================
+        // === COMPONENTE: SIDEBAR ===
+        // ============================================
+        
+        function Sidebar({ alunoID, stats, medals, visits, onPublish, onExport, onLogout }) {
+            return (
+                <aside className="w-full md:w-80 bg-[#0d1117] border-r border-[#30363d] p-6 flex flex-col overflow-y-auto">
+                    {/* Header */}
+                    <div className="mb-8">
+                        <h1 className="text-2xl font-bold text-white mono mb-1">
+                            FACULDADE <span className="text-[#238636]">ÍNTEGRA</span>
+                        </h1>
+                        <p className="text-xs uppercase tracking-wider text-[#8b949e] flex items-center gap-2">
+                            <i className="fas fa-user-circle"></i>
+                            {alunoID}
+                        </p>
+                    </div>
+                    
+                    {/* Stats Panel */}
+                    <div className="mb-8">
+                        <h3 className="text-xs uppercase font-bold mb-4 text-[#8b949e] tracking-wider flex items-center gap-2">
+                            <i className="fas fa-chart-line"></i>
+                            Atributos AVC
+                        </h3>
+                        <StatsPanel stats={stats} />
+                    </div>
+                    
+                    {/* Medalhas */}
+                    <div className="mb-8 pb-8 border-b border-[#30363d]">
+                        <h3 className="text-xs uppercase font-bold mb-4 text-[#8b949e] tracking-wider flex items-center gap-2">
+                            <i className="fas fa-trophy"></i>
+                            Conquistas
+                        </h3>
+                        <MedalWall medals={medals} />
+                    </div>
+                    
+                    {/* Ações */}
+                    <div className="mt-auto space-y-3">
+                        {/* Botão Biblioteca */}
+                        <a
+                            href={CONFIG.BIBLIOTECA_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full py-3 bg-transparent text-[#d4af37] border border-[#d4af37] rounded-lg font-bold text-xs uppercase hover:bg-[#d4af3710] text-center no-underline transition-all"
+                        >
+                            <i className="fas fa-book-open mr-2"></i>
+                            Visitar Biblioteca
+                        </a>
+                        
+                        {/* Exportar Histórico */}
+                        <button
+                            onClick={onExport}
+                            className="btn-secondary w-full flex items-center justify-center gap-2"
+                        >
+                            <i className="fas fa-download"></i>
+                            Baixar Histórico
+                        </button>
+                        
+                        {/* Publicar */}
+                        <button
+                            onClick={onPublish}
+                            className="btn-primary w-full"
+                        >
+                            <i className="fas fa-upload mr-2"></i>
+                            Publicar Trabalho
+                        </button>
+                        
+                        {/* Logout */}
+                        <button
+                            onClick={onLogout}
+                            className="w-full py-2 text-xs text-[#ef4444] uppercase hover:text-[#f87171] transition-colors"
+                        >
+                            <i className="fas fa-sign-out-alt mr-1"></i>
+                            Sair / Reset
+                        </button>
+                        
+                        {/* Contador de Visitas */}
+                        <div className="text-center pt-4 text-[10px] text-[#238636] mono">
+                            <i className="fas fa-users mr-1"></i>
+                            {visits.toLocaleString('pt-BR')} Online
+                        </div>
+                    </div>
+                </aside>
+            );
+        }
+
+        // ============================================
+        // === COMPONENTE PRINCIPAL: APP ===
+        // ============================================
+        
+        function App() {
+            // Estados principais
+            const [alunoID, setAlunoID] = useState(localStorage.getItem('alunoID') || "");
+            const [stats, setStats] = useState({
+                rigor: CONFIG.LIMITES.STAT_MIN,
+                imaginacao: CONFIG.LIMITES.STAT_MIN,
+                simbiose: CONFIG.LIMITES.STAT_MIN
+            });
+            const [messages, setMessages] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [publishing, setPublishing] = useState(false);
+            const [visits, setVisits] = useState(1000);
+            
+            // Computed values
+            const medals = useMemo(() => MedalService.calcular(stats), [stats]);
+            
+            // ============================================
+            // === EFEITO: Sincronizar Visitas ===
+            // ============================================
+            
+            useEffect(() => {
+                FirebaseService.updateVisitCount()
+                    .then(count => setVisits(count))
+                    .catch(() => setVisits(1000));
+            }, []);
+            
+            // ============================================
+            // === EFEITO: Carregar Dados do Usuário ===
+            // ============================================
+            
+            useEffect(() => {
+                if (!alunoID) return;
+                
+                // Salva no localStorage
+                localStorage.setItem('alunoID', alunoID);
+                
+                // Carrega stats
+                FirebaseService.loadStats(alunoID)
+                    .then(data => setStats(data))
+                    .catch(console.error);
+                
+                // Carrega histórico
+                FirebaseService.loadHistory(alunoID)
+                    .then(history => {
+                        if (history.length === 0) {
+                            setMessages([{
+                                autor: 'Tutor',
+                                texto: `Bem-vindo à Forja Epistêmica, ${alunoID}. Sistema OESD ativado. Como posso auxiliar em sua jornada acadêmica hoje?`,
+                                timestamp: Date.now()
+                            }]);
+                        } else {
+                            setMessages(history);
+                        }
+                    })
+                    .catch(console.error);
+            }, [alunoID]);
+            
+            // ============================================
+            // === HANDLER: Enviar Mensagem ===
+            // ============================================
+            
+   const handleSend = useCallback(async (text) => {
+                if (!text || loading) return;
+                setLoading(true);
+                const userMsg = { autor: alunoID, texto: text, timestamp: Date.now() };
+                setMessages(prev => [...prev, userMsg]);
+
+                try {
+                    await FirebaseService.saveMessage(alunoID, userMsg);
+                    const resposta = await TutorService.ask(text, messages);
+                    const tutorMsg = { autor: 'Tutor', texto: resposta, timestamp: Date.now() };
+                    setMessages(prev => [...prev, tutorMsg]);
+                    await FirebaseService.saveMessage(alunoID, tutorMsg);
+
+                    setStats(prevStats => {
+                        const n = {
+                            rigor: Math.min(prevStats.rigor + 2, 100),
+                            imaginacao: Math.min(prevStats.imaginacao + 2, 100),
+                            simbiose: Math.min(Math.round((prevStats.rigor + prevStats.imaginacao + 4) / 2), 100)
+                        };
+                        FirebaseService.saveStats(alunoID, n).catch(console.error);
+                        return n;
+                    });
+                } catch (error) {
+                    setMessages(prev => [...prev, {
+                        autor: 'SISTEMA',
+                        texto: `❌ ERRO TÉCNICO: ${error.message}`,
+                        timestamp: Date.now()
+                    }]);
+                } finally {
+                    setLoading(false);
+                }
+            }, [alunoID, loading, messages]);
+           
+            // ============================================
+            // === HANDLER: Exportar Histórico ===
+            // ============================================
+
+const handleExport = useCallback(() => {
+                // Formatação em Markdown: O padrão ouro da documentação técnica
+                const mdContent = `
+# 📜 LEGADO EPISTÊMICO: ${alunoID.toUpperCase()}
+## Ordem Epistemológica de Simbiose Digital (OESD)
+---
+**Pioneiro:** ${alunoID}
+**Data de Emissão:** ${new Date().toLocaleString('pt-BR')}
+**Sistema:** IOFW v3.2 - Faculdade Íntegra
+**Certificação de Autoria:** Carlos Alberto Reis © 2025
+
+### 📊 ATRIBUTOS DE CARREIRA
+- **RIGOR CIENTÍFICO:** ${stats.rigor}%
+- **IMAGINAÇÃO ESTÉTICA:** ${stats.imaginacao}%
+- **ÍNDICE DE SIMBIOSE:** ${stats.simbiose}%
+
+---
+### 🧠 REGISTRO DA FORJA (DIÁLOGOS)
+
+${messages.map(m => `#### [${m.autor.toUpperCase()}]
+${m.texto}
+
+`).join('---')}
+
+---
+**© 2025 CARLOS ALBERTO REIS**
+*Documento gerado por Inteligência Simbiótica. Propriedade Intelectual Protegida.*
+                `;
+
+                const blob = new Blob([mdContent.trim()], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Legado_${alunoID}.md`; // Formato .md (Markdown)
+                a.click();
+                URL.revokeObjectURL(url);
+            }, [messages, alunoID, stats]);           
+  
+          
+            // ============================================
+            // === HANDLER: Publicar na Biblioteca ===
+            // ============================================
+            
+            const handlePublish = useCallback(async () => {
+                const titulo = prompt("📚 Defina o Título da Obra:");
+                if (!titulo || !titulo.trim()) return;
+                
+                setPublishing(true);
+                
+                try {
+                    // Gera capa automática
+                    const capa = CapaService.gerar(titulo, alunoID, stats);
+                    const safeCapa = (capa && capa.length > 100) 
+                        ? capa 
+                        : 'https://placehold.co/400x600/010409/238636/png?text=IOFW+OESD';
+                    
+                    // Payload completo
+                    const payload = {
+                        title: titulo.trim(),
+                        author: alunoID,
+                        category: "artigos",
+                        desc: `Trabalho acadêmico desenvolvido na Faculdade Íntegra através do Sistema OESD. Rigor: ${stats.rigor}%, Imaginação: ${stats.imaginacao}%, Simbiose: ${stats.simbiose}%`,
+                        cover: safeCapa,
+                        price: 0,
+                        salePrice: 0,
+                        plan: "padrao",
+                        origin: "iofw_v32",
+                        link: "https://khareis159.github.io/iofw/",
+                        stats: { ...stats },
+                        status: 'pending',
+                        createdAt: Date.now(),
+                        messageCount: messages.length
+                    };
+                    
+                    await FirebaseService.publishToLibrary(payload);
+                    
+                    alert("✅ SUCESSO!\n\nSua obra foi enviada para a Biblioteca KhareisBook e aguarda aprovação da curadoria.");
+                    
+                } catch (error) {
+                    console.error('Erro na publicação:', error);
+                    alert("❌ Erro ao publicar: " + error.message);
+                } finally {
+                    setPublishing(false);
+                }
+            }, [alunoID, stats, messages]);
+            
+            // ============================================
+            // === HANDLER: Logout ===
+            // ============================================
+            
+            const handleLogout = useCallback(() => {
+                if (confirm("🔄 Deseja realmente sair e reiniciar sua jornada?\n\nTodos os dados locais serão limpos.")) {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    location.reload();
+                }
+            }, []);
+            
+            // ============================================
+            // === RENDER: Tela de Login ===
+            // ============================================
+            
+            if (!alunoID) {
+                return <LoginScreen onLogin={setAlunoID} />;
+            }
+            
+            // ============================================
+            // === RENDER: App Principal ===
+            // ============================================
+            
+            return (
+                <div className="h-screen flex flex-col md:flex-row text-gray-300 font-sans">
+                    {/* Sidebar */}
+                    <Sidebar
+                        alunoID={alunoID}
+                        stats={stats}
+                        medals={medals}
+                        visits={visits}
+                        onPublish={handlePublish}
+                        onExport={handleExport}
+                        onLogout={handleLogout}
+                    />
+                    
+                    {/* Main Content */}
+                    <main className="flex-1 flex flex-col bg-[#010409] relative">
+                        {/* Status Bar */}
+                        <div className="bg-[#0d1117] border-b border-[#30363d] p-3 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-gray-500 sticky top-0 z-10">
+                            <span className="flex items-center gap-2">
+                                <span className="inline-block w-2 h-2 bg-[#238636] rounded-full animate-pulse-slow"></span>
+                                MATRIZ OESD ATIVA
+                            </span>
+                            <span className="text-[#238636]">
+                                PIONEIRO: <strong className="text-white">{alunoID}</strong>
+                            </span>
+                        </div>
+                        
+                        {/* Chat Window */}
+                        <ChatWindow messages={messages} loading={loading} />
+                        
+                        {/* Chat Input */}
+                        <ChatInput 
+                            onSend={handleSend} 
+                            loading={loading}
+                            disabled={publishing}
+                        />
+                        
+                        {/* Publishing Overlay */}
+                        {publishing && (
+                            <div className="loading-overlay">
+                                <div className="spinner"></div>
+                                <div className="text-[#238636] font-mono font-bold text-sm">
+                                    PUBLICANDO NA BIBLIOTECA...
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        // ============================================
+        // === INICIALIZAÇÃO ===
+        // ============================================
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
 
 
 
