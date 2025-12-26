@@ -55,29 +55,78 @@
             --text-error: #ef4444;
             --shadow-glow: 0 0 15px rgba(35, 134, 54, 0.1);
         }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Space Grotesk', 'Inter', sans-serif;
+body {
+            font-family: 'Space Grotesk', sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-secondary);
+            /* Trava a altura para impedir scroll da página inteira */
             height: 100vh;
             height: 100dvh; 
             width: 100vw;
             overflow: hidden; 
             position: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         #root {
             height: 100%;
             width: 100%;
-            padding: 8px;
+            max-width: 100vw;
+            max-height: 100dvh;
+            padding: 0; /* Remove padding lateral no mobile para ganhar espaço */
+            display: flex;
+            flex-direction: column;
         }
+
         @media (min-width: 768px) {
-            #root { padding: 16px; }
-        }      
-    
+            #root { padding: 12px; } /* Moldura apenas no PC */
+        }
+
+        /* Faz a sidebar ser menos agressiva no mobile */
+        aside {
+            height: auto;
+            max-height: 100%;
+        }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            /* Trava a altura para impedir scroll da página inteira */
+            height: 100vh;
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden; 
+            position: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #root {
+            height: 100%;
+            width: 100%;
+            max-width: 100vw;
+            max-height: 100dvh;
+            padding: 0; /* Remove padding lateral no mobile para ganhar espaço */
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            #root { padding: 12px; } /* Moldura apenas no PC */
+        }
+
+        /* Faz a sidebar ser menos agressiva no mobile */
+        aside {
+            height: auto;
+            max-height: 100%;
+        }
+
         .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
         
         /* === COMPONENTES BASE === */
@@ -1273,164 +1322,77 @@ ${m.texto}
             // ============================================
             // === RENDER: App Principal ===
             // ============================================
-            
-            return (
-                <div className="h-screen flex flex-col md:flex-row text-gray-300 font-sans">
-                    {/* Sidebar */}
-                    <Sidebar
-                        alunoID={alunoID}
-                        stats={stats}
-                        medals={medals}
-                        visits={visits}
-                        onPublish={handlePublish}
-                        onExport={handleExport}
-                        onLogout={handleLogout}
-                        onManual={() => setVendoManual(true)}  // <--- NOVA LINHA AQUI
-                    />
+ return (
+                <div className="h-full w-full flex flex-col md:flex-row bg-black overflow-hidden relative">
                     
-                    {/* Main Content */}
-                    <main className="flex-1 flex flex-col bg-[#010409] relative">
-                        {/* Status Bar */}
-                        <div className="bg-[#0d1117] border-b border-[#30363d] p-3 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-gray-500 sticky top-0 z-10">
+                    {/* SIDEBAR AJUSTADA: No mobile ela agora é uma área de scroll curto no topo ou lateral */}
+                    <div className="w-full md:w-80 flex-none max-h-[35vh] md:max-h-full overflow-y-auto border-b md:border-b-0 md:border-r border-[#30363d] bg-[#0d1117] z-20">
+                        <Sidebar
+                            alunoID={alunoID}
+                            stats={stats}
+                            medals={medals}
+                            visits={visits}
+                            onPublish={handlePublish}
+                            onExport={handleExport}
+                            onLogout={handleLogout}
+                            onManual={() => setVendoManual(true)}
+                        />
+                    </div>
+                    
+                    {/* ÁREA DE CHAT: Ocupa o restante da tela obrigatoriamente */}
+                    <main className="flex-1 flex flex-col min-h-0 bg-[#010409] relative">
+                        {/* Header Fino */}
+                        <div className="bg-[#0d1117]/80 backdrop-blur-sm border-b border-[#30363d] p-2 flex justify-between items-center text-[8px] uppercase font-mono tracking-widest text-gray-500 sticky top-0 z-10">
                             <span className="flex items-center gap-2">
-                                <span className="inline-block w-2 h-2 bg-[#238636] rounded-full animate-pulse-slow"></span>
-                                MATRIZ OESD ATIVA
+                                <div className="w-2 h-2 bg-[#238636] rounded-full animate-pulse"></div>
+                                MATRIZ ATIVA
                             </span>
-                            <span className="text-[#238636]">
-                                PIONEIRO: <strong className="text-white">{alunoID}</strong>
-                            </span>
+                            <span className="text-[#238636]">PIONEIRO: {alunoID}</span>
                         </div>
                         
-                        {/* Chat Window */}
-                        <ChatWindow messages={messages} loading={loading} />
+                        {/* Janela de Chat com Flex-1 para forçar o encaixe */}
+                        <div className="flex-1 min-h-0 relative">
+                            <ChatWindow messages={messages} loading={loading} />
+                        </div>
                         
-                        {/* Chat Input */}
-                        <ChatInput 
-                            onSend={handleSend} 
-                            loading={loading}
-                            disabled={publishing}
-                        />
+                        {/* INPUT: Fica fixo no rodapé, SEMPRE visível */}
+                        <div className="p-2 md:p-4 bg-[#0d1117] border-t border-[#30363d]">
+                            <ChatInput 
+                                onSend={handleSend} 
+                                loading={loading}
+                                disabled={publishing}
+                            />
+                        </div>
                         
-                        {/* Publishing Overlay */}
+                        {/* Overlays de Manual e Publicação permanecem aqui... */}
                         {publishing && (
-                            <div className="loading-overlay">
+                            <div className="publish-overlay">
                                 <div className="spinner"></div>
-                                <div className="text-[#238636] font-mono font-bold text-sm">
-                                    PUBLICANDO NA BIBLIOTECA...
-                                </div>
+                                <div className="text-[#238636] font-mono font-bold text-xs mt-2">PROCESSANDO LEGADO...</div>
                             </div>
                         )}
-  {/* MODAL MANUAL DO ALUNO (CÓDICE ESTENDIDO) */}
+                        
                         {vendoManual && (
-                            <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-                                <div className="bg-[#0d1117] border border-[#30363d] w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-xl shadow-2xl relative flex flex-col">
-                                    
-                                    {/* Cabeçalho do Manual */}
-                                    <div className="p-6 border-b border-[#30363d] bg-[#161b22] sticky top-0 z-10 flex justify-between items-center">
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-[#238636] mono">CÓDICE OESD</h2>
-                                            <p className="text-xs text-gray-500 uppercase tracking-widest">Manual de Sobrevivência e Prosperidade</p>
-                                        </div>
-                                        <button onClick={() => setVendoManual(false)} className="text-gray-400 hover:text-white transition-colors text-xl font-bold px-4">✕</button>
+                            <div className="fixed inset-0 bg-black/98 z-[300] flex items-center justify-center p-4">
+                                <div className="bg-[#0d1117] border border-[#30363d] w-full max-w-2xl h-[80vh] flex flex-col rounded-xl overflow-hidden shadow-2xl">
+                                    <div className="p-4 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
+                                        <h2 className="text-lg font-bold text-[#238636] mono">CÓDICE OESD</h2>
+                                        <button onClick={() => setVendoManual(false)} className="text-white px-3 py-1 border border-[#30363d]">✕</button>
                                     </div>
-                                    
-                                    {/* Conteúdo do Manual */}
-                                    <div className="p-8 space-y-8 text-gray-300 font-sans leading-relaxed text-sm overflow-y-auto custom-scroll">
-                                        
-                                        {/* Seção 0: Boas Vindas (Quebra de Gelo) */}
-                                        <section className="bg-[#23863610] p-6 rounded-lg border-l-4 border-[#238636]">
-                                            <h3 className="text-white font-bold text-lg mb-2 flex items-center gap-2"><i className="fas fa-hand-sparkles"></i> 0. NÃO TENHA MEDO</h3>
-                                            <p>Bem-vindo, Pioneiro. A tecnologia digital pode parecer assustadora, mas aqui <strong>você é o piloto</strong>. Este sistema foi desenhado para ser "Inquebrantável". Não importa onde você clique, você não vai "quebrar" a internet. A IA (o Tutor) está aqui para servir ao seu intelecto, não para julgá-lo.</p>
-                                        </section>
-
-                                        {/* Seção 1: Como Conversar */}
-                                        <section>
-                                            <h3 className="text-[#8957e5] font-bold text-base mb-3 uppercase tracking-wider">1. A Arte da Forja (Como Conversar)</h3>
-                                            <div className="grid md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <strong className="text-white block mb-2">Para Iniciantes:</strong>
-                                                    <p className="mb-2">Fale como se estivesse conversando com um professor sábio e paciente. Não precisa usar códigos.</p>
-                                                    <ul className="list-disc pl-5 space-y-1 text-gray-400">
-                                                        <li><em>"Explique o que é filosofia para uma criança de 10 anos."</em></li>
-                                                        <li><em>"Me ajude a escrever um texto sobre vendas."</em></li>
-                                                    </ul>
-                                                </div>
-                                                <div>
-                                                    <strong className="text-white block mb-2">Para Avançados:</strong>
-                                                    <p className="mb-2">Use Engenharia de Prompt (Comandos diretos) para obter resultados técnicos.</p>
-                                                    <ul className="list-disc pl-5 space-y-1 text-gray-400">
-                                                        <li><em>"Analise este texto sob a ótica do Estoicismo."</em></li>
-                                                        <li><em>"Crie uma tabela comparativa entre X e Y."</em></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </section>
-
-                                        {/* Seção 2: Os Atributos */}
-                                        <section>
-                                            <h3 className="text-[#238636] font-bold text-base mb-3 uppercase tracking-wider">2. Como Evoluir seu Nível</h3>
-                                            <p className="mb-4">O sistema lê suas interações e sobe sua barra de progresso lateral automaticamente.</p>
-                                            <div className="grid md:grid-cols-3 gap-4 text-xs">
-                                                <div className="bg-[#010409] p-4 rounded border border-[#30363d]">
-                                                    <strong className="text-[#238636] block text-sm mb-1">RIGOR</strong>
-                                                    Aumenta quando você pede dados, fontes, fatos históricos ou correções técnicas.
-                                                </div>
-                                                <div className="bg-[#010409] p-4 rounded border border-[#30363d]">
-                                                    <strong className="text-[#8957e5] block text-sm mb-1">IMAGINAÇÃO</strong>
-                                                    Aumenta quando você pede histórias, imagens, criatividade ou ideias futuristas.
-                                                </div>
-                                                <div className="bg-[#010409] p-4 rounded border border-[#30363d]">
-                                                    <strong className="text-white block text-sm mb-1">SIMBIOSE</strong>
-                                                    É a média dos dois. Mostra o quão equilibrada é sua mente digital.
-                                                </div>
-                                            </div>
-                                        </section>
-
-                                        {/* Seção 3: Comandos Visuais */}
-                                        <section>
-                                            <h3 className="text-[#d4af37] font-bold text-base mb-3 uppercase tracking-wider">3. O Poder Visual (Gráficos e Imagens)</h3>
-                                            <p className="mb-4">O Tutor pode "ver" e "desenhar". Use estas palavras-chave mágicas na conversa:</p>
-                                            <ul className="space-y-3 bg-[#010409] p-4 rounded border border-[#30363d]">
-                                                <li>📸 <strong>Fotos:</strong> Digite <em>"Gere uma imagem realista de uma biblioteca antiga"</em>.</li>
-                                                <li>📊 <strong>Gráficos:</strong> Digite <em>"Gere um gráfico de pizza sobre meu tempo: 50% Estudo, 50% Lazer"</em>.</li>
-                                                <li>📐 <strong>Geometria:</strong> Digite <em>"Desenhe um quadrado vermelho usando vetores"</em>.</li>
-                                            </ul>
-                                        </section>
-
-                                        {/* Seção 4: Dinheiro */}
-                                        <section>
-                                            <h3 className="text-blue-400 font-bold text-base mb-3 uppercase tracking-wider">4. Ecossistema Financeiro (Sua Carreira)</h3>
-                                            <p className="mb-2">Não estude de graça. Seu conhecimento vale dinheiro.</p>
-                                            <ol className="list-decimal pl-5 space-y-2 text-gray-400">
-                                                <li>Tenha uma conversa valiosa com o Tutor (Ex: Crie um Ebook, Um Resumo, Uma Tese).</li>
-                                                <li>Clique no botão verde <strong>PUBLICAR TRABALHO</strong> no menu esquerdo.</li>
-                                                <li>O sistema enviará sua obra para a <strong>Biblioteca KhareisBook</strong>.</li>
-                                                <li>Você define o preço. Se vender, você fica com <strong>90%</strong> do valor via Pix (10% fica para manutenção da plataforma).</li>
-                                                <li>O Admin recebe o pagamento, entrega o arquivo e repassa sua parte. Simples.</li>
-                                            </ol>
-                                        </section>
-
-                                        {/* Rodapé do Manual */}
-                                        <div className="text-center text-xs text-gray-600 mt-8 pt-8 border-t border-[#30363d]">
-                                            <p>"O analfabeto do século 21 não será aquele que não sabe ler e escrever, mas aquele que não sabe aprender, desaprender e reaprender." – Alvin Toffler</p>
-                                        </div>
+                                    <div className="flex-1 overflow-y-auto p-6 text-sm text-gray-300 leading-relaxed chat-scroll">
+                                        <p className="mb-4">Manual de Instruções Acadêmicas...</p>
+                                        <p className="opacity-50 text-[10px] uppercase tracking-widest">Use o Rigor para dados e a Imaginação para estética. Cada diálogo aumenta seu Índice de Simbiose.</p>
                                     </div>
-
-                                    {/* Botão Fechar */}
-                                    <div className="p-6 bg-[#0d1117] border-t border-[#30363d] sticky bottom-0 z-10 text-center">
-                                        <button onClick={() => setVendoManual(false)} className="w-full md:w-1/3 py-3 bg-[#238636] text-white rounded font-bold hover:bg-[#2ea043] transition shadow-lg shadow-green-900/20">
-                                            LI E COMPREENDI A MISSÃO
-                                        </button>
+                                    <div className="p-4 bg-[#0d1117] border-t border-[#30363d] text-center">
+                                        <button onClick={() => setVendoManual(false)} className="bg-[#238636] text-white px-8 py-2 rounded font-bold uppercase text-[10px]">Fechar</button>
                                     </div>
                                 </div>
                             </div>
                         )}
-
-
-                  </main>
+                    </main>
                 </div>
-            );
-        }
+            );        
+
 
         // ============================================
         // === INICIALIZAÇÃO ===
@@ -1441,7 +1403,6 @@ ${m.texto}
     </script>
 </body>
 </html>
-
 
 
 
