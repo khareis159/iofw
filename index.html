@@ -55,6 +55,7 @@
             --text-error: #ef4444;
             --shadow-glow: 0 0 15px rgba(35, 134, 54, 0.1);
         }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
@@ -77,8 +78,6 @@
             #root { padding: 16px; }
         }      
     
-
-
         .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
         
         /* === COMPONENTES BASE === */
@@ -618,41 +617,61 @@ const CONFIG = {
             }
         };
 
-        // ============================================
-        // === COMPONENTE: TELA DE LOGIN ===
-        // ============================================
-        
- function LoginScreen({ onLogin }) {
+  // === COMPONENTE: TELA DE LOGIN (VERSÃO INTEGRAL MOBILE) ===
+        function LoginScreen({ onLogin }) {
             const [nome, setNome] = useState("");
-            // ... handleSubmit ...
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (nome.trim()) {
+                    onLogin(nome.trim());
+                }
+            };
             
             return (
-                <div className="fixed inset-0 flex items-center justify-center bg-[#010409] p-6">
-                    <div className="card-oesd p-8 md:p-10 w-full max-w-[340px] md:max-w-md text-center shadow-2xl border-2 border-[#238636]/30">
+                <div className="fixed inset-0 flex items-center justify-center bg-[#010409] p-6 z-[100]">
+                    <div className="card-oesd p-8 md:p-10 w-full max-w-[340px] md:max-w-md text-center shadow-2xl border-2 border-[#238636]/30 animate-float relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#238636] to-transparent"></div>
                         <div className="mb-8">
-                            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[#238636] mono tracking-tighter">IOFW</h1>
-                            <p className="text-[10px] text-[#8b949e] uppercase tracking-[0.3em]">Protocolo de Acesso</p>
+                            <h1 className="text-4xl font-bold mb-2 text-[#238636] mono tracking-tighter uppercase">IOFW</h1>
+                            <p className="text-[10px] text-[#8b949e] uppercase tracking-[0.3em]">Protocolo de Acesso OESD</p>
                         </div>
-                        {/* ... resto do formulário ... */}
-                    </div>
-                </div>
-            );
-        }function LoginScreen({ onLogin }) {
-            const [nome, setNome] = useState("");
-            // ... handleSubmit ...
-            
-            return (
-                <div className="fixed inset-0 flex items-center justify-center bg-[#010409] p-6">
-                    <div className="card-oesd p-8 md:p-10 w-full max-w-[340px] md:max-w-md text-center shadow-2xl border-2 border-[#238636]/30">
-                        <div className="mb-8">
-                            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[#238636] mono tracking-tighter">IOFW</h1>
-                            <p className="text-[10px] text-[#8b949e] uppercase tracking-[0.3em]">Protocolo de Acesso</p>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-6 text-left">
+                            <div>
+                                <label className="text-[9px] uppercase font-bold text-gray-500 ml-1 mb-2 block tracking-widest">Identificação do Pioneiro</label>
+                                <input
+                                    type="text"
+                                    value={nome}
+                                    onChange={(e) => setNome(e.target.value)}
+                                    className="w-full bg-[#010409] border border-[#30363d] p-4 rounded-lg text-white text-center outline-none focus:border-[#238636] transition-all mono uppercase text-xs"
+                                    placeholder="NOME OU PSEUDÔNIMO"
+                                    maxLength="50"
+                                    autoFocus
+                                />
+                            </div>
+                            
+                            <button
+                                type="submit"
+                                className="btn-primary w-full py-4 shadow-lg shadow-green-900/20"
+                                disabled={!nome.trim()}
+                            >
+                                <i className="fas fa-rocket mr-2 text-[10px]"></i>
+                                INICIAR JORNADA
+                            </button>
+                        </form>
+                        
+                        <div className="mt-8 pt-6 border-t border-[#30363d]">
+                            <p className="text-[9px] text-[#8b949e] uppercase tracking-widest mono">
+                                © 2025 Carlos Alberto Reis
+                            </p>
                         </div>
-                        {/* ... resto do formulário ... */}
                     </div>
                 </div>
             );
         }
+
+
 
         // ============================================
         // === COMPONENTE: PAINEL DE STATS ===
@@ -1240,11 +1259,17 @@ ${m.texto}
             // ============================================
             // === RENDER: Tela de Login ===
             // ============================================
-            
+      
+
+
+      
             if (!alunoID) {
                 return <LoginScreen onLogin={setAlunoID} />;
             }
-            
+       
+
+
+     
             // ============================================
             // === RENDER: App Principal ===
             // ============================================
@@ -1416,7 +1441,6 @@ ${m.texto}
     </script>
 </body>
 </html>
-
 
 
 
