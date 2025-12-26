@@ -923,7 +923,7 @@ const CONFIG = {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         className="flex-1 min-w-0 bg-[#010409] border border-[#30363d] rounded-lg p-3 text-white outline-none focus:border-[#238636] transition-all"
-                        placeholder="Digite sua mensagem..."
+                        placeholder="E fale comigo..."
                         disabled={loading || disabled}
                         maxLength="500"
                     />
@@ -1109,7 +1109,7 @@ const CONFIG = {
                         if (history.length === 0) {
                             setMessages([{
                                 autor: 'Tutor',
-                                texto: `Olá, ${alunoID}. Pensando em que hoje?`,
+                                texto: `Olá, ${alunoID}. Escolha o assunto?`,
                                 timestamp: Date.now()
                             }]);
                         } else {
