@@ -1010,7 +1010,17 @@ const CONFIG = {
                             <p className="text-[9px] text-gray-600 font-mono mb-1 uppercase">
                                 © 2026 Carlos Alberto Reis
                             </p>
-                            <div className="text-[9px] text-[#238636] font-mono flex items-center justify-center gap-2">
+     {/* CONTADOR DE VISITAS RECUPERADO */}
+                            <div className="text-[9px] text-[#238636] font-mono flex items-center justify-center gap-2 mt-1">
+                                <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                                </span>
+                                {visits.toLocaleString('pt-BR')} PIONEIROS ONLINE
+                            </div>
+
+
+                       <div className="text-[9px] text-[#238636] font-mono flex items-center justify-center gap-2">
                                 <span className="relative flex h-2 w-2">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -1404,6 +1414,7 @@ ${m.texto}
     </script>
 </body>
 </html>
+
 
 
 
