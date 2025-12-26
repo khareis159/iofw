@@ -73,8 +73,9 @@ body {
     height: 100vh;
     height: 100dvh; 
     width: 100vw;
-    overflow: hidden; 
-    position: fixed;
+    overflow-x: hidden;   /* só corta horizontal */
+    overflow-y: auto;     /* permite rolagem vertical */
+    position: relative;   /* não usar fixed aqui */
 }
 
 @media (min-width: 768px) {
