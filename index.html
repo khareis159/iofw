@@ -57,27 +57,29 @@
         }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Space Grotesk', 'Inter', sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-secondary);
-            height: 100vh;
-            height: 100dvh; 
-            width: 100vw;
-            overflow: hidden; 
-            position: fixed;
-        }
-        
-        #root {
-            height: 100%;
-            width: 100%;
-            padding: 8px;
-        }
-        @media (min-width: 768px) {
-            #root { padding: 16px; }
-        }      
-    
+ /* === CHAT FORM (barra de envio de mensagens) === */
+.chat-form {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    height: 100vh;
+    height: 100dvh; 
+    width: 100vw;
+    overflow: hidden; 
+    position: fixed;
+}
+
+@media (min-width: 768px) {
+    #root { padding: 16px; }
+}
         .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
         
         /* === COMPONENTES BASE === */
